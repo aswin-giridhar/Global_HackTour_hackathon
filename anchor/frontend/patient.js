@@ -203,8 +203,52 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   };
 }
 
+// ─── Typed-input overlay — long-press or double-click the ring to reveal ───
+const textOverlay = document.getElementById('text-input-overlay');
+const textField   = document.getElementById('text-input-field');
+const textForm    = document.getElementById('text-input-form');
+const textClose   = document.getElementById('text-input-close');
+const textSend    = document.getElementById('text-input-send');
+
+const LONG_PRESS_MS = 500;
+let longPressTimer = null;
+let longPressTriggered = false;
+
+function openTextInput() {
+  textOverlay.hidden = false;
+  requestAnimationFrame(() => textField.focus());
+}
+function closeTextInput() {
+  textOverlay.hidden = true;
+  textField.value = '';
+  textSend.disabled = false;
+}
+
+breathingRing.addEventListener('pointerdown', () => {
+  longPressTriggered = false;
+  longPressTimer = setTimeout(() => {
+    longPressTriggered = true;
+    openTextInput();
+  }, LONG_PRESS_MS);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+  breathingRing.addEventListener(evt, () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  });
+});
+breathingRing.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  longPressTriggered = true;  // also suppresses the follow-on click
+  openTextInput();
+});
+
 // ─── Click the breathing ring to start listening ───
-breathingRing.addEventListener('click', () => {
+breathingRing.addEventListener('click', (e) => {
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    return;
+  }
   if (recognition && !app.classList.contains('speaking')) {
     recognition.start();
   }
@@ -212,9 +256,32 @@ breathingRing.addEventListener('click', () => {
 
 // Also listen on the ambient area (large click target)
 document.getElementById('ambient').addEventListener('click', () => {
+  if (longPressTriggered) return;
   if (recognition && !app.classList.contains('speaking')) {
     recognition.start();
   }
+});
+
+// Submit typed input through the same pipeline as voice and buttons
+textForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = textField.value.trim();
+  if (!text) return;
+  textSend.disabled = true;
+  closeTextInput();
+  handleInput(text);
+});
+
+// Close via button, Escape, or clicking outside the form
+textClose.addEventListener('click', closeTextInput);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !textOverlay.hidden) {
+    e.preventDefault();
+    closeTextInput();
+  }
+});
+textOverlay.addEventListener('click', (e) => {
+  if (e.target === textOverlay) closeTextInput();
 });
 
 // ─── Auto-listen after response finishes ───

@@ -48,6 +48,22 @@
     <!-- Breathing ring — the heart of the interface -->
     <div id="breathing-ring" aria-label="Anchor is here with you"></div>
 
+    <!-- Text input — hidden by default, shown on long-press / double-click the ring -->
+    <div id="text-input-overlay" hidden>
+      <form id="text-input-form">
+        <input id="text-input-field"
+               type="text"
+               placeholder="Type what you'd like to ask, love…"
+               autocomplete="off"
+               autocapitalize="sentences"
+               spellcheck="true"
+               aria-label="Type your question for Anchor">
+        <button type="submit" id="text-input-send" aria-label="Send">↵</button>
+        <button type="button" id="text-input-close" aria-label="Close">×</button>
+      </form>
+      <p id="text-input-hint">press Esc to close — long-press the ring to reopen</p>
+    </div>
+
     <!-- Response layer — text appears here when Anchor speaks -->
     <div id="response-screen" hidden>
       <div id="response-card">
