@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI):
         "behavior_log.json",
         "reminder_confirmations.json",
         "missed_med_fired.json",
+        "location.json",
     ]:
         fpath = data_dir / fname
         if not fpath.exists():
@@ -417,22 +418,24 @@ def get_schedule():
 
 @app.get("/api/music/tracks")
 def music_tracks():
-    """Prototype track list. Real deployment would serve licensed audio."""
+    """Tracks composed by ElevenLabs Music, cleared for commercial use
+    per their terms. Chosen to fit Margaret's preferences in the profile
+    (hymns, wartime songs, ambient calm)."""
     return {
         "tracks": [
-            {"id": "hymn_ionian", "title": "Gentle hymn",
-             "subtitle": "Generated tone — evokes Margaret's hymns",
-             "url": "/static/assets/music/gentle_hymn.wav"},
+            {"id": "gentle_hymn", "title": "Gentle hymn",
+             "subtitle": "Traditional-style hymn, piano and strings",
+             "url": "/static/assets/music/gentle_hymn.mp3"},
             {"id": "dance_memory", "title": "Dance memory",
-             "subtitle": "Generated tone — evokes 1940s wartime songs",
-             "url": "/static/assets/music/dance_memory.wav"},
+             "subtitle": "1940s-style waltz, accordion and strings",
+             "url": "/static/assets/music/dance_memory.mp3"},
             {"id": "evening_calm", "title": "Evening calm",
-             "subtitle": "Generated tone — soft ambient",
-             "url": "/static/assets/music/evening_calm.wav"},
+             "subtitle": "Soft piano and cello for settling down",
+             "url": "/static/assets/music/evening_calm.mp3"},
         ],
-        "note": ("These are prototype-generated tones. A production build "
-                 "would license Vera Lynn tracks, hymns, and family voice "
-                 "recordings per Margaret's profile preferences."),
+        "note": ("Music composed with ElevenLabs Music API, cleared for "
+                 "commercial use. Matched to Margaret's preferences "
+                 "(hymns, wartime songs, ambient calm) from her profile."),
     }
 
 
@@ -664,7 +667,124 @@ def list_family_photos():
     return {"photos": photos}
 
 
-# ─── Safety / location (honest placeholder, no fake GPS) ─────────────────
+# ─── Safety / location (real foreground GPS via browser Geolocation API) ─
+# Works for always-on Anchor devices (tablet in the kitchen) and for the
+# demo scenario where the judge walks away with the patient device. Does
+# NOT do background tracking with the screen off — that needs a native
+# companion app.
+
+import math
+
+LOCATION_PATH = Path("data/location.json")
+DEFAULT_RADIUS_M = 500
+LOCATION_HISTORY_LIMIT = 120
+
+
+def _load_location() -> dict:
+    """Load location state. Tolerates the lifespan's default '[]' init."""
+    try:
+        data = json.loads(LOCATION_PATH.read_text()) if LOCATION_PATH.exists() else {}
+        return data if isinstance(data, dict) else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def _save_location(state: dict) -> None:
+    LOCATION_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOCATION_PATH.write_text(json.dumps(state, indent=2))
+
+
+def _haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    R = 6_371_000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+    return 2 * R * math.asin(math.sqrt(a))
+
+
+class LocationUpdate(BaseModel):
+    lat: float
+    lng: float
+    accuracy: float | None = None
+
+
+class HomeSet(BaseModel):
+    lat: float
+    lng: float
+    radius_m: float = DEFAULT_RADIUS_M
+
+
+@app.post("/api/location/update")
+def location_update(pos: LocationUpdate):
+    """Patient device posts its current position. If it's outside the
+    configured safe zone, fire a wandering escalation — idempotent per
+    breach: one alert per contiguous out-of-zone period."""
+    from datetime import datetime
+    state = _load_location()
+    now_iso = datetime.now().isoformat()
+    entry = {"time": now_iso, "lat": pos.lat, "lng": pos.lng,
+             "accuracy": pos.accuracy}
+    history = state.get("history", [])
+    history.append(entry)
+    if len(history) > LOCATION_HISTORY_LIMIT:
+        history = history[-LOCATION_HISTORY_LIMIT:]
+    state["history"] = history
+    state["latest"] = entry
+
+    home = state.get("home")
+    inside = True
+    distance_m = 0.0
+    if home:
+        distance_m = _haversine_m(home["lat"], home["lng"], pos.lat, pos.lng)
+        inside = distance_m <= home.get("radius_m", DEFAULT_RADIUS_M)
+        was_inside = state.get("inside_safe_zone", True)
+        if was_inside and not inside:
+            # Fresh breach — fire the carer escalation once
+            fire_escalation(
+                reason="wandering_safe_zone_breach",
+                patient_said=f"[location] Device left the {int(home.get('radius_m',DEFAULT_RADIUS_M))}m safe zone ({int(distance_m)}m from home)",
+                anchor_replied="[system] Live wandering alert — device GPS reports out of zone.",
+            )
+            state["last_breach_at"] = now_iso
+        state["inside_safe_zone"] = inside
+
+    _save_location(state)
+    return {"ok": True, "inside_safe_zone": inside,
+            "distance_m": round(distance_m, 1), "home_set": bool(home)}
+
+
+@app.post("/api/location/set_home")
+def location_set_home(home: HomeSet):
+    state = _load_location()
+    state["home"] = {"lat": home.lat, "lng": home.lng,
+                     "radius_m": home.radius_m}
+    state["inside_safe_zone"] = True
+    _save_location(state)
+    return {"ok": True, "home": state["home"]}
+
+
+@app.get("/api/location/latest")
+def location_latest():
+    """Carer polls this to show Margaret's position and safe-zone state."""
+    state = _load_location()
+    home = state.get("home")
+    latest = state.get("latest")
+    distance_m = None
+    inside = True
+    if home and latest:
+        distance_m = round(_haversine_m(home["lat"], home["lng"],
+                                        latest["lat"], latest["lng"]), 1)
+        inside = distance_m <= home.get("radius_m", DEFAULT_RADIUS_M)
+    return {
+        "latest": latest,
+        "home": home,
+        "inside_safe_zone": inside,
+        "distance_m": distance_m,
+        "last_breach_at": state.get("last_breach_at"),
+        "history_count": len(state.get("history", [])),
+    }
+
 
 @app.get("/safety")
 def safety_page():
@@ -673,12 +793,13 @@ def safety_page():
 
 @app.post("/api/safety/simulate_wandering")
 def simulate_wandering():
-    """Demo-only: fires a wandering escalation as if GPS had detected Margaret
-    leaving the safe zone. Real deployment uses mobile-app location data."""
+    """Demo hook — fires a wandering escalation directly, bypassing GPS.
+    Useful during a pitch when the presenter can't physically walk the
+    device out of the safe zone."""
     fire_escalation(
         reason="wandering_safe_zone_breach",
-        patient_said="[system] Simulated: Margaret left the 500m safe zone around home",
-        anchor_replied="[system] Wandering alert — GPS placeholder simulation (demo).",
+        patient_said="[simulation] Margaret left the 500m safe zone around home",
+        anchor_replied="[system] Wandering alert — demo simulation.",
     )
     return {"ok": True, "note": "Simulated wandering alert fired to carer."}
 
@@ -720,6 +841,7 @@ def reset():
         "behavior_log.json",
         "reminder_confirmations.json",
         "missed_med_fired.json",
+        "location.json",
     ]:
         fpath = data_dir / fname
         fpath.write_text("[]")

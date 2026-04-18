@@ -128,6 +128,37 @@ async function checkReminders() {
 checkReminders();
 setInterval(checkReminders, 30000);  // every 30s — good enough, low-noise
 
+// ─── Location sharing (quiet background, foreground-only) ───
+// Browsers block background tracking without permission; that's fine for
+// this use case — the device is typically on and foreground. If the user
+// denies permission, we quietly stop and the carer safety page shows
+// "no location shared".
+if ('geolocation' in navigator) {
+  const postPos = (pos) => {
+    fetch('/api/location/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+      }),
+    }).catch(() => { /* non-fatal */ });
+  };
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      postPos(pos);
+      navigator.geolocation.watchPosition(postPos, () => {}, {
+        enableHighAccuracy: true,
+        maximumAge: 15000,
+        timeout: 20000,
+      });
+    },
+    () => { /* permission denied — silently skip */ },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
 // ─── Button fallback ───
 buttons.forEach(btn => {
   btn.addEventListener('click', (e) => {
