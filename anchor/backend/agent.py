@@ -320,6 +320,20 @@ def respond_to_margaret(user_input: str) -> dict:
     with open("backend/patient_profile.json") as f:
         profile = json.load(f)
 
+    # 1b. If a Google Calendar ICS URL is configured, replace the static
+    #     scheduled_events with the live feed. This is the Track-3 "real
+    #     agentic integration" — when Priya adds a new event to her real
+    #     calendar, Anchor's answer to "when is Priya coming?" reflects
+    #     it within 60s. Falls back silently to static on any failure.
+    try:
+        from calendar_integration import get_live_events
+        live = get_live_events()
+        if live:
+            profile = dict(profile)
+            profile["scheduled_events"] = live
+    except Exception as e:
+        print(f"[ICS] Falling back to static scheduled_events: {e}")
+
     # 2. Retrieve relevant memories
     relevant = get_relevant_memories(user_input, k=6)
 

@@ -27,6 +27,7 @@ load_dotenv()
 from agent import respond_to_margaret  # noqa: E402
 from voice import synthesize_speech  # noqa: E402
 from escalation import read_notifications, fire_escalation  # noqa: E402
+import calendar_integration  # noqa: E402
 
 
 @asynccontextmanager
@@ -393,6 +394,45 @@ def read_behavior_log():
         return {"entries": json.loads(path.read_text()) if path.exists() else []}
     except json.JSONDecodeError:
         return {"entries": []}
+
+
+# ─── Google Calendar (via private ICS URL, no OAuth) ─────────────────────
+
+class IcsUrl(BaseModel):
+    url: str
+
+
+@app.post("/api/schedule/ics_url")
+def schedule_set_ics(payload: IcsUrl):
+    """Priya pastes her Google Calendar 'Secret address in iCal format'
+    URL. Anchor fetches it immediately and every 60 s from then on."""
+    try:
+        result = calendar_integration.set_ics_url(payload.url)
+    except ValueError as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+    return result
+
+
+@app.delete("/api/schedule/ics_url")
+def schedule_clear_ics():
+    calendar_integration.clear_ics_url()
+    return {"ok": True}
+
+
+@app.get("/api/schedule/ics_url")
+def schedule_ics_status():
+    """Safe status for the carer UI. Never returns the URL itself."""
+    return calendar_integration.status()
+
+
+@app.get("/api/schedule/live")
+def schedule_live_events():
+    """Return the events Anchor is currently using as ground truth.
+    Useful for debugging and for the carer to see what Anchor sees."""
+    return {
+        "events": calendar_integration.get_live_events(),
+        "status": calendar_integration.status(),
+    }
 
 
 # ─── Remote schedule management ───────────────────────────────────────────

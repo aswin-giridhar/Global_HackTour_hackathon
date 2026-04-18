@@ -659,6 +659,23 @@
     <a href="/safety">Safety &amp; location</a>
     <button id="toggle-schedule">Edit schedule</button>
     <button id="toggle-family">Family messages</button>
+    <button id="toggle-gcal">Google Calendar</button>
+  </div>
+
+  <div class="schedule-panel" id="gcal-panel">
+    <div class="med-title">Google Calendar (ICS sync)</div>
+    <p style="font-size:12px; color:var(--brown-warm); line-height:1.5; margin: 4px 0 10px;">
+      In Google Calendar → your calendar → Settings → scroll to
+      <em>"Secret address in iCal format"</em> → copy the URL, paste it here.
+      Anchor re-fetches every 60 seconds; when you add a new event to
+      your calendar, Margaret's next answer reflects it.
+    </p>
+    <div class="schedule-row" style="grid-template-columns: 1fr 90px;">
+      <input type="url" id="gcal-url" placeholder="https://calendar.google.com/calendar/ical/..." style="font-family: var(--font-ui); font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--sand); background: white;">
+      <button class="schedule-save" id="gcal-save">Save</button>
+    </div>
+    <div id="gcal-status" style="font-size: 11px; color: var(--brown-soft); margin-top: 10px;">Checking…</div>
+    <button id="gcal-clear" style="font-family: var(--font-ui); font-size: 11px; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--sand); background: var(--warm-white); color: var(--brown-soft); cursor: pointer; margin-top: 6px; display: none;">Disconnect</button>
   </div>
 
   <div class="family-panel" id="family-panel">
@@ -1001,6 +1018,72 @@
 
     refreshInsights();
     setInterval(refreshInsights, 30000);
+
+    // ─── Google Calendar ICS panel ───
+    const gcalPanel = document.getElementById('gcal-panel');
+    document.getElementById('toggle-gcal').addEventListener('click', () => {
+      gcalPanel.classList.toggle('open');
+      if (gcalPanel.classList.contains('open')) refreshGcalStatus();
+    });
+
+    async function refreshGcalStatus() {
+      try {
+        const res = await fetch('/api/schedule/ics_url');
+        const s = await res.json();
+        const status = document.getElementById('gcal-status');
+        const clearBtn = document.getElementById('gcal-clear');
+        if (!s.configured) {
+          status.textContent = 'No calendar connected. Paste the ICS URL above to start.';
+          status.style.color = 'var(--brown-soft)';
+          clearBtn.style.display = 'none';
+          return;
+        }
+        clearBtn.style.display = 'inline-block';
+        if (s.last_error) {
+          status.textContent = `⚠ Fetch error: ${s.last_error}`;
+          status.style.color = 'var(--terracotta)';
+        } else {
+          const t = s.last_success_at
+            ? new Date(s.last_success_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+            : '—';
+          status.textContent = `✓ Connected · ${s.event_count} upcoming events · last sync ${t}`;
+          status.style.color = 'var(--sage)';
+        }
+      } catch (e) { console.warn('gcal status', e); }
+    }
+
+    document.getElementById('gcal-save').addEventListener('click', async () => {
+      const url = document.getElementById('gcal-url').value.trim();
+      if (!url) return;
+      const status = document.getElementById('gcal-status');
+      status.textContent = '…connecting and fetching events…';
+      status.style.color = 'var(--brown-soft)';
+      try {
+        const res = await fetch('/api/schedule/ics_url', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({url}),
+        });
+        const body = await res.json();
+        if (!res.ok || body.ok === false) {
+          status.textContent = `⚠ ${body.error || 'failed'}`;
+          status.style.color = 'var(--terracotta)';
+          return;
+        }
+        document.getElementById('gcal-url').value = '';
+        refreshGcalStatus();
+      } catch (e) {
+        status.textContent = '⚠ Network error';
+        status.style.color = 'var(--terracotta)';
+      }
+    });
+
+    document.getElementById('gcal-clear').addEventListener('click', async () => {
+      if (!confirm('Disconnect the Google Calendar? Anchor will fall back to the static schedule.')) return;
+      try {
+        await fetch('/api/schedule/ics_url', { method: 'DELETE' });
+        refreshGcalStatus();
+      } catch (e) { console.warn('gcal clear', e); }
+    });
 
     // ─── Family manager (photos + voice messages) ───
     const famPanel = document.getElementById('family-panel');
