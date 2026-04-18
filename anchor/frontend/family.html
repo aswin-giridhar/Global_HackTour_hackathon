@@ -375,9 +375,13 @@
           ? `<button class="voice-btn" data-voice="${voiceUrl}" data-name="${member.name}">🎙 Hear ${member.name}'s message</button>`
           : '';
 
+        // Prefer uploaded photo, then the bundled watercolour illustration,
+        // then the abstract SVG. Chained onerror so missing files degrade cleanly.
+        const watercolour = `/static/assets/family/${member.name.toLowerCase()}.jpg`;
+        const escapedSvg = portraitSvg(member.name).replace(/"/g, '&quot;').replace(/\n/g, ' ');
         const portraitContent = photos[member.name]
-          ? `<img src="${photos[member.name]}" alt="${member.name}" onerror="this.outerHTML = &quot;${portraitSvg(member.name).replace(/"/g, '&quot;').replace(/\n/g, ' ')}&quot;;"/>`
-          : portraitSvg(member.name);
+          ? `<img src="${photos[member.name]}" alt="${member.name}" onerror="this.onerror=null; this.src='${watercolour}'; this.addEventListener('error', () => { this.outerHTML = &quot;${escapedSvg}&quot;; });"/>`
+          : `<img src="${watercolour}" alt="${member.name}" onerror="this.outerHTML = &quot;${escapedSvg}&quot;;"/>`;
 
         return `
           <div class="family-card ${isPrimary ? 'primary' : ''}">
