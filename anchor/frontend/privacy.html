@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Privacy &amp; data handling</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <style>
+    html, body { overflow: auto; }
+    body { background: var(--cream); font-family: var(--font-ui); color: var(--brown-deep); }
+
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 56px 28px 72px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 5vw, 54px);
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 6px;
+    }
+    .sub {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--brown-soft);
+      margin-bottom: 32px;
+    }
+
+    section {
+      background: var(--warm-white);
+      border: 1px solid var(--sand);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 18px var(--shadow-warm);
+    }
+    section h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 12px;
+    }
+    section p, section li {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--brown-warm);
+      margin-bottom: 10px;
+    }
+    section ul { margin-left: 22px; }
+    section strong { color: var(--brown-deep); font-weight: 600; }
+
+    .prototype-banner {
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      background: rgba(196, 122, 84, 0.1);
+      border: 1px solid rgba(196, 122, 84, 0.35);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--brown-deep);
+      line-height: 1.5;
+    }
+    .prototype-banner strong { color: var(--terracotta); }
+
+    .back-link {
+      display: inline-flex;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--brown-warm);
+      text-decoration: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+    }
+
+    a { color: var(--terracotta); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Privacy &amp; data handling</h1>
+    <p class="sub">Honest about what we collect, where it lives, and what's missing.</p>
+
+    <div class="prototype-banner">
+      <strong>This is a hackathon prototype.</strong> It does not meet UK clinical-grade data-protection requirements.
+      Do not use with real patient data. This page exists so the shape of production-grade compliance is explicit from day one.
+    </div>
+
+    <section>
+      <h2>What data exists in this prototype</h2>
+      <ul>
+        <li><strong>Conversation transcripts.</strong> Every spoken or typed interaction with Anchor is logged to <code>data/conversation_log.json</code>, including the full LLM response and whether a safety rail rejected it.</li>
+        <li><strong>Carer notifications.</strong> Escalation events (distress keywords, falls, missed medication, wandering) in <code>data/carer_notifications.json</code> with timestamp, urgency, and the patient utterance that triggered them.</li>
+        <li><strong>Medication log.</strong> Timestamps of confirmed doses.</li>
+        <li><strong>Mood / sleep / behaviour entries.</strong> Carer-entered free-text notes.</li>
+        <li><strong>Location.</strong> Foreground GPS coordinates (lat, lng, accuracy) while the patient device is on and the browser tab is visible. Last 120 readings only; old points expire.</li>
+        <li><strong>Family photos and voice recordings.</strong> Optional uploads in <code>data/family_photos/</code> and <code>data/family_voices/</code>.</li>
+        <li><strong>Patient profile.</strong> Identity, family, routines, preferences, scheduled events, care notes — seeded, and edited by the carer via the schedule editor.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>UK GDPR — Article 9 special category</h2>
+      <p>Most of the above is <strong>special-category health data</strong> under UK GDPR Article 9. Any production deployment would require, before a single patient is onboarded:</p>
+      <ul>
+        <li><strong>An Article 9(2) lawful basis</strong> — explicit written consent from the patient (while capacity is present) and any Lasting Power of Attorney.</li>
+        <li><strong>A Data Protection Impact Assessment (DPIA)</strong> — ICO template, signed off by a named DPO.</li>
+        <li><strong>ICO registration</strong> as a data controller.</li>
+        <li><strong>Data Processing Agreements</strong> with every sub-processor — in this prototype's architecture that means Anthropic, Z.AI, ElevenLabs, and the hosting provider. Non-trivial: some LLM providers' default terms use prompts for training.</li>
+        <li><strong>Encryption at rest and in transit</strong> — TLS is on by default on Render, but the at-rest encryption of the <code>data/*.json</code> files is not implemented in this prototype.</li>
+        <li><strong>A retention policy and deletion mechanism</strong> — the prototype has <code>/api/reset</code> but no patient-initiated data export or right-to-erasure workflow.</li>
+        <li><strong>A clear audit trail</strong> — who accessed what, when. The prototype has an activity feed for the carer, not an auditable access log.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Capacity and consent</h2>
+      <p>A patient with dementia may lack capacity to consent to data processing at any given moment, even when they had it earlier. Production-grade Anchor would need a capacity-assessment workflow and a Lasting Power of Attorney (LPA) on record. For a non-instantaneous decision — "do we tell the GP about this month's mood trend?" — the Best Interests framework from the Mental Capacity Act 2005 applies.</p>
+      <p>None of this is implemented here. The prototype assumes Priya has already had these conversations off-platform.</p>
+    </section>
+
+    <section>
+      <h2>What the prototype does protect</h2>
+      <ul>
+        <li>No third-party analytics, ads, or tracking pixels. Zero cookies beyond whatever Render's platform injects.</li>
+        <li>No patient data is sent to any service that isn't strictly required to produce a response (LLM provider, TTS provider).</li>
+        <li>The two-layer safety rail blocks ungrounded LLM output before it reaches the patient — a privacy-by-design choice against hallucinated facts about family or health.</li>
+        <li><code>.env</code> and <code>data/</code> are in <code>.gitignore</code>; keys and patient state never go into git.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Not a medical device</h2>
+      <p>Anchor is a companion, not a medical device. It does not give medical advice — every attempt is deflected to the GP or Priya. It does not diagnose, triage, or adjust treatment. Fall detection is limited to verbal self-report. Geofence alerts are best-effort foreground-only tracking, not a replacement for in-person supervision.</p>
+      <p>A production deployment with any diagnostic claim would require MHRA classification as medical-device software (likely Class IIa) with the associated clinical validation burden.</p>
+    </section>
+
+    <a href="/" class="back-link">&larr; Back to Anchor</a>
+  </div>
+</body>
+</html>

@@ -3,6 +3,15 @@
    Voice capture, latency-hiding, smooth state transitions.
    ───────────────────────────────────────────── */
 
+// ─── PWA service worker registration (offline shell + installable icon) ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => console.log('[Anchor] SW registered, scope:', reg.scope))
+      .catch(err => console.warn('[Anchor] SW registration failed:', err));
+  });
+}
+
 const app            = document.getElementById('app');
 const breathingRing  = document.getElementById('breathing-ring');
 const responseScreen = document.getElementById('response-screen');

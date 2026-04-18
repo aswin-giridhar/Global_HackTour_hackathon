@@ -1,0 +1,53 @@
+{
+  "name": "Anchor — Dementia Companion",
+  "short_name": "Anchor",
+  "description": "A companion that holds memory for people who are losing theirs.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5EDE0",
+  "theme_color": "#D4A574",
+  "lang": "en-GB",
+  "categories": ["health", "medical", "lifestyle"],
+  "icons": [
+    {
+      "src": "/static/assets/icons/anchor-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/icons/anchor-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/icons/anchor-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Family",
+      "short_name": "Family",
+      "url": "/family",
+      "description": "Photos, voices, and tap-to-call for Margaret's family"
+    },
+    {
+      "name": "Music",
+      "short_name": "Music",
+      "url": "/music",
+      "description": "Familiar calming tunes"
+    },
+    {
+      "name": "Carer",
+      "short_name": "Carer",
+      "url": "/carer",
+      "description": "Priya's view: alerts, medication, schedule"
+    }
+  ]
+}

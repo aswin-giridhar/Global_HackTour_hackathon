@@ -76,6 +76,21 @@ def patient_interface():
     return FileResponse("frontend/index.html")
 
 
+@app.get("/sw.js")
+def service_worker():
+    """Serve the service worker at root scope so it can control all pages.
+    Cache-Control is 0 so updated workers deploy on next page load."""
+    return FileResponse("frontend/sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "max-age=0, no-cache, no-store"})
+
+
+@app.get("/privacy")
+def privacy_page():
+    """Honest privacy & data-handling disclosure — meets the 'acknowledge in
+    pitch' bar from the build plan, not GDPR compliance itself."""
+    return FileResponse("frontend/privacy.html")
+
+
 @app.get("/carer")
 def carer_interface():
     """Serve the carer notification view (second screen)."""
@@ -442,6 +457,95 @@ def music_tracks():
 @app.get("/music")
 def music_page():
     return FileResponse("frontend/music.html")
+
+
+# ─── Carer analytics — aggregate insights over conversation & log data ──
+# Complements the real-time activity feed with weekly / multi-day stats
+# Priya can actually show the GP. Pure counting and rate math — no ML.
+
+from collections import Counter
+import re
+
+
+def _word_tokens(s: str) -> list[str]:
+    return [w for w in re.findall(r"[a-z]{3,}", s.lower()) if w not in {
+        "the","and","you","for","are","but","not","she","her","him","his","has",
+        "have","had","with","what","when","where","who","why","how","shall","ask",
+        "from","this","that","today","coming","going","love","yes","was","were",
+    }]
+
+
+@app.get("/api/analytics/summary")
+def analytics_summary():
+    """Longitudinal counts and rates a carer can act on or hand to a GP.
+    Pulls from the existing log files — no extra instrumentation."""
+    from datetime import datetime, timedelta
+    convo = _safe_read_json(Path("data/conversation_log.json"))
+    meds  = _safe_read_json(Path("data/medication_log.json"))
+    behav = _safe_read_json(Path("data/behavior_log.json"))
+    notifs = _safe_read_json(Path("data/carer_notifications.json"))
+    gaps   = _safe_read_json(Path("data/profile_update_suggestions.json"))
+
+    now = datetime.now()
+    since_7d = (now - timedelta(days=7)).isoformat()
+    since_24h = (now - timedelta(hours=24)).isoformat()
+
+    convo_7d = [c for c in convo if (c.get("time") or "") >= since_7d]
+    convo_24h = [c for c in convo if (c.get("time") or "") >= since_24h]
+
+    # Most-asked topics in the last 7 days (crude but honest keyword counter)
+    all_words = []
+    for c in convo_7d:
+        all_words.extend(_word_tokens(c.get("margaret", "")))
+    top_words = Counter(all_words).most_common(5)
+
+    # Repetition rate — how often the same margaret utterance repeats
+    utterances = [c.get("margaret","").strip().lower() for c in convo_7d]
+    utter_counts = Counter(utterances)
+    repeats = sum(n - 1 for n in utter_counts.values() if n > 1)
+    repetition_rate = round(repeats / len(utterances), 2) if utterances else 0.0
+
+    # Medication adherence — for the last 7 days, did a morning and evening
+    # confirmation land on each day?
+    today = _today_iso()
+    adherence_days = 0
+    doses_possible = 0
+    for i in range(7):
+        d = (now - timedelta(days=i)).date().isoformat()
+        entries = [m for m in meds if m.get("date") == d]
+        has_morning = any(m.get("slot") == "morning" for m in entries)
+        has_evening = any(m.get("slot") == "evening" for m in entries)
+        doses_possible += 2
+        adherence_days += int(has_morning) + int(has_evening)
+    adherence_pct = round(100 * adherence_days / doses_possible, 1) if doses_possible else 0.0
+
+    # Mood distribution (last 7 days)
+    mood_counts = Counter(
+        b["mood"] for b in behav
+        if b.get("mood") and (b.get("time") or "") >= since_7d
+    )
+
+    # Refusal / critic-rejection rate — how often the guardrail fired
+    rejected = sum(1 for c in convo_7d if c.get("rejected_by"))
+    refusal_rate = round(rejected / len(convo_7d), 2) if convo_7d else 0.0
+
+    # Escalations by urgency
+    high_alerts = sum(1 for n in notifs if n.get("urgency") == "high" and (n.get("time") or "") >= since_7d)
+    gentle_alerts = sum(1 for n in notifs if n.get("urgency") == "gentle" and (n.get("time") or "") >= since_7d)
+
+    return {
+        "window_days": 7,
+        "conversations_7d": len(convo_7d),
+        "conversations_24h": len(convo_24h),
+        "top_topics": [{"word": w, "count": n} for w, n in top_words],
+        "repetition_rate": repetition_rate,
+        "refusal_rate": refusal_rate,
+        "medication_adherence_pct": adherence_pct,
+        "mood_counts_7d": dict(mood_counts),
+        "alerts_high_7d": high_alerts,
+        "alerts_gentle_7d": gentle_alerts,
+        "open_profile_gaps": len(gaps),
+    }
 
 
 # ─── Unified activity feed ───────────────────────────────────────────────

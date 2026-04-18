@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#D4A574">
+  <link rel="apple-touch-icon" href="/static/assets/icons/anchor-192.png">
   <style>
     /* ─── Carer view — warm, clean, professional ─── */
     :root {
@@ -544,6 +547,79 @@
     .fam-btn.active { background: var(--terracotta); color: white; border-color: var(--terracotta); }
     .fam-btn.has-content { color: var(--sage); border-color: rgba(142, 168, 118, 0.5); }
     .fam-btn input[type="file"] { display: none; }
+
+    /* ─── Insights panel ─── */
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .insight-tile {
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .insight-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--brown-soft);
+      margin-bottom: 4px;
+    }
+    .insight-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      line-height: 1.1;
+    }
+    .insight-value.good { color: var(--sage); }
+    .insight-value.warn { color: var(--amber); }
+    .insight-value.bad  { color: var(--terracotta); }
+    .insight-sub {
+      font-size: 11px;
+      color: var(--brown-soft);
+      margin-top: 2px;
+    }
+
+    .topic-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--cream);
+      border: 1px solid var(--sand);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--brown-warm);
+      margin: 2px 3px 2px 0;
+    }
+    .topic-chip b { color: var(--brown-deep); font-weight: 600; }
+
+    .mood-bar {
+      display: flex;
+      height: 14px;
+      border-radius: 7px;
+      overflow: hidden;
+      margin-top: 4px;
+      background: var(--stone);
+    }
+    .mood-bar > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+      font-weight: 600;
+    }
+    .mood-bar .good     { background: var(--sage); }
+    .mood-bar .settled  { background: var(--sage-light); }
+    .mood-bar .agitated { background: var(--amber); }
+    .mood-bar .tearful  { background: var(--terracotta); }
   </style>
 </head>
 <body>
@@ -637,6 +713,18 @@
   </div>
   <div class="activity-feed" id="activity-feed">
     <div class="activity-empty">Quiet so far today.</div>
+  </div>
+
+  <div class="section-title">
+    <span>Insights</span>
+    <span class="section-sub">last 7 days</span>
+  </div>
+  <div id="insights-panel" style="padding: 0 16px 16px;">
+    <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
+  </div>
+
+  <div style="padding: 16px; text-align: center; font-size: 12px; color: var(--brown-soft);">
+    <a href="/privacy" style="color: var(--brown-warm); text-decoration: none; border-bottom: 1px dotted var(--sand);">Privacy &amp; data handling</a>
   </div>
 
   <audio id="chime" src="/static/assets/chime.wav"></audio>
@@ -838,6 +926,81 @@
     refreshActivity();
     setInterval(refreshDashboard, 5000);
     setInterval(refreshActivity,  5000);
+
+    // ─── Insights (longitudinal summary) ───
+    async function refreshInsights() {
+      try {
+        const res = await fetch('/api/analytics/summary');
+        const s = await res.json();
+        const panel = document.getElementById('insights-panel');
+
+        const adh = s.medication_adherence_pct;
+        const adhTone = adh >= 90 ? 'good' : adh >= 70 ? 'warn' : 'bad';
+        const repTone = s.repetition_rate > 0.3 ? 'warn' : 'good';
+        const refTone = s.refusal_rate > 0.2 ? 'warn' : 'good';
+        const alertTone = s.alerts_high_7d > 0 ? 'bad' : s.alerts_gentle_7d > 3 ? 'warn' : 'good';
+
+        const moods = s.mood_counts_7d || {};
+        const moodTotal = Object.values(moods).reduce((a,b)=>a+b, 0);
+        const moodBar = moodTotal > 0
+          ? `<div class="mood-bar">${['good','settled','agitated','tearful'].map(m => {
+              const n = moods[m] || 0;
+              const pct = n / moodTotal * 100;
+              return pct > 0 ? `<div class="${m}" style="width:${pct}%">${n}</div>` : '';
+            }).join('')}</div>`
+          : '<div class="insight-sub" style="margin-top:6px">No mood entries yet this week.</div>';
+
+        const topics = (s.top_topics || []).length
+          ? s.top_topics.map(t => `<span class="topic-chip"><b>${escapeHtml(t.word)}</b> ×${t.count}</span>`).join('')
+          : '<span style="color: var(--brown-soft); font-size: 12px; font-style: italic;">Nothing yet.</span>';
+
+        panel.innerHTML = `
+          <div class="insight-grid">
+            <div class="insight-tile">
+              <div class="insight-label">Medication adherence</div>
+              <div class="insight-value ${adhTone}">${adh}%</div>
+              <div class="insight-sub">past 7 days</div>
+            </div>
+            <div class="insight-tile">
+              <div class="insight-label">Repetition rate</div>
+              <div class="insight-value ${repTone}">${Math.round(s.repetition_rate*100)}%</div>
+              <div class="insight-sub">of utterances repeated</div>
+            </div>
+            <div class="insight-tile">
+              <div class="insight-label">Guardrail blocks</div>
+              <div class="insight-value ${refTone}">${Math.round(s.refusal_rate*100)}%</div>
+              <div class="insight-sub">responses safely refused</div>
+            </div>
+            <div class="insight-tile">
+              <div class="insight-label">Alerts (7d)</div>
+              <div class="insight-value ${alertTone}">${s.alerts_high_7d + s.alerts_gentle_7d}</div>
+              <div class="insight-sub">${s.alerts_high_7d} urgent · ${s.alerts_gentle_7d} gentle</div>
+            </div>
+          </div>
+
+          <div class="insight-tile" style="margin-bottom: 10px;">
+            <div class="insight-label">Mood distribution — past 7 days</div>
+            ${moodBar}
+          </div>
+
+          <div class="insight-tile" style="margin-bottom: 10px;">
+            <div class="insight-label">Most-asked topics</div>
+            <div style="margin-top: 6px;">${topics}</div>
+          </div>
+
+          ${s.open_profile_gaps > 0 ? `
+          <div class="insight-tile" style="border-color: var(--amber); background: rgba(212, 165, 116, 0.08);">
+            <div class="insight-label" style="color: var(--terracotta);">${s.open_profile_gaps} open profile gap${s.open_profile_gaps===1?'':'s'}</div>
+            <div class="insight-sub">Things Margaret asked about that weren't in her profile — fill them in via the schedule editor.</div>
+          </div>` : ''}
+        `;
+      } catch (e) {
+        console.warn('insights load', e);
+      }
+    }
+
+    refreshInsights();
+    setInterval(refreshInsights, 30000);
 
     // ─── Family manager (photos + voice messages) ───
     const famPanel = document.getElementById('family-panel');
