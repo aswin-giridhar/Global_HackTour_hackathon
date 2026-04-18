@@ -3,70 +3,258 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carer view — Priya</title>
+  <title>Anchor — Priya's view</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ─── Carer view — warm, clean, professional ─── */
+    :root {
+      --cream:       #F5EDE0;
+      --warm-white:  #FAF6F0;
+      --stone:       #E8DDD0;
+      --sand:        #D4C5B0;
+      --amber:       #D4A574;
+      --terracotta:  #C47A54;
+      --sage:        #8EA876;
+      --sage-light:  #A8C494;
+      --brown-deep:  #3D2B1F;
+      --brown-warm:  #5C4033;
+      --brown-soft:  #7A6352;
+      --font-ui:     'DM Sans', -apple-system, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: -apple-system, system-ui, sans-serif;
-      background: #fff;
-      margin: 0;
-      padding: 20px;
+      font-family: var(--font-ui);
+      background: var(--warm-white);
+      color: var(--brown-deep);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
-    h1 {
-      font-size: 18px;
-      color: #666;
+
+    /* ─── Header ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--stone);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sage);
+      animation: status-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes status-pulse {
+      0%, 100% { opacity: 0.6; box-shadow: 0 0 0 0 rgba(142, 168, 118, 0.3); }
+      50%      { opacity: 1;   box-shadow: 0 0 0 4px rgba(142, 168, 118, 0); }
+    }
+
+    .status-text {
+      font-size: 13px;
       font-weight: 500;
-      margin-bottom: 20px;
+      color: var(--sage);
+      letter-spacing: 0.02em;
     }
-    .notif {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-left: 4px solid #8ea876;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      animation: slide-in 0.4s ease;
-    }
-    .notif.high {
-      border-left-color: #c47a54;
-    }
-    .notif .time {
-      font-size: 12px;
-      color: #999;
-    }
-    .notif .msg {
-      margin-top: 6px;
+
+    .header-title {
       font-size: 15px;
+      font-weight: 600;
+      color: var(--brown-warm);
     }
-    .notif .anchor-said {
-      margin-top: 4px;
-      font-size: 14px;
-      color: #666;
-    }
-    @keyframes slide-in {
-      from { transform: translateX(20px); opacity: 0; }
-      to { transform: none; opacity: 1; }
-    }
+
+    /* ─── Empty state ─── */
     #empty-state {
-      color: #aaa;
-      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
       text-align: center;
-      margin-top: 40px;
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+      border: 1px solid var(--stone);
+    }
+
+    .empty-text {
+      font-size: 14px;
+      color: var(--brown-soft);
+      line-height: 1.5;
+    }
+
+    .empty-sub {
+      font-size: 12px;
+      color: var(--sand);
+      margin-top: 4px;
+    }
+
+    /* ─── Notification cards ─── */
+    #notifications {
+      padding: 12px 16px;
+    }
+
+    .notif {
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      animation: notif-slide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .notif::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--sage);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .notif.high::before {
+      background: var(--terracotta);
+    }
+
+    .notif-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .notif-badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: rgba(142, 168, 118, 0.12);
+      color: var(--sage);
+    }
+
+    .notif.high .notif-badge {
+      background: rgba(196, 122, 84, 0.12);
+      color: var(--terracotta);
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--sand);
+      font-weight: 500;
+    }
+
+    .notif-msg {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      line-height: 1.4;
+    }
+
+    .notif-context {
+      font-size: 12px;
+      color: var(--brown-soft);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .notif-context strong {
+      font-weight: 600;
+      color: var(--brown-warm);
+    }
+
+    @keyframes notif-slide {
+      0% {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── Connection status ─── */
+    .reconnecting .status-dot {
+      background: var(--terracotta);
+      animation: status-pulse 1s ease-in-out infinite;
+    }
+    .reconnecting .status-text {
+      color: var(--terracotta);
     }
   </style>
 </head>
 <body>
-  <h1>Priya's carer view</h1>
+  <div class="header">
+    <div class="header-left">
+      <div class="status-dot"></div>
+      <span class="status-text">Margaret is doing fine</span>
+    </div>
+    <span class="header-title">Priya's view</span>
+  </div>
+
   <div id="notifications"></div>
-  <div id="empty-state">No notifications yet. Margaret is doing fine.</div>
+
+  <div id="empty-state">
+    <div class="empty-icon">🏠</div>
+    <div class="empty-text">No notifications yet.</div>
+    <div class="empty-sub">Margaret is resting quietly.</div>
+  </div>
+
   <audio id="chime" src="/static/assets/chime.mp3"></audio>
 
   <script>
     let lastCount = 0;
+    let reconnectAttempts = 0;
 
     async function poll() {
       try {
         const res = await fetch('/api/carer/notifications');
+        if (!res.ok) throw new Error('Network error');
         const notifs = await res.json();
+
+        // Reset reconnect on success
+        reconnectAttempts = 0;
+        document.body.classList.remove('reconnecting');
+
+        // Update status text
+        const statusText = document.querySelector('.status-text');
+        if (notifs.length > 0) {
+          const latest = notifs[notifs.length - 1];
+          const isHigh = latest.urgency === 'high';
+          statusText.textContent = isHigh ? 'Margaret needs attention' : 'Gentle check-in suggested';
+          statusText.style.color = isHigh ? 'var(--terracotta)' : 'var(--amber)';
+        } else {
+          statusText.textContent = 'Margaret is doing fine';
+          statusText.style.color = '';
+        }
+
         if (notifs.length > lastCount) {
           const chime = document.getElementById('chime');
           chime.play().catch(() => {});
@@ -74,7 +262,12 @@
         }
         render(notifs);
       } catch (err) {
-        console.error('Poll error:', err);
+        reconnectAttempts++;
+        if (reconnectAttempts > 3) {
+          document.body.classList.add('reconnecting');
+          document.querySelector('.status-text').textContent = 'Reconnecting...';
+        }
+        console.error('[Carer] Poll error:', err);
       }
     }
 
@@ -84,16 +277,19 @@
 
       if (notifs.length === 0) {
         container.innerHTML = '';
-        emptyState.style.display = 'block';
+        emptyState.style.display = 'flex';
         return;
       }
 
       emptyState.style.display = 'none';
       container.innerHTML = notifs.slice().reverse().map(n => `
-        <div class="notif ${n.urgency}">
-          <div class="time">${new Date(n.time).toLocaleTimeString()}</div>
-          <div class="msg"><strong>${n.reason}</strong> — ${n.patient_said}</div>
-          <div class="anchor-said">Anchor said: ${n.anchor_replied}</div>
+        <div class="notif ${n.urgency || 'gentle'}">
+          <div class="notif-header">
+            <span class="notif-badge">${(n.urgency || 'gentle') === 'high' ? '⚠ Urgent' : '💡 Gentle'}</span>
+            <span class="notif-time">${new Date(n.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          </div>
+          <div class="notif-msg">Margaret said: "${n.patient_said}"</div>
+          <div class="notif-context"><strong>Anchor said:</strong> ${n.anchor_replied}</div>
         </div>
       `).join('');
     }

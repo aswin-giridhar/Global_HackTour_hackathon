@@ -4,34 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anchor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <main id="app" class="resting">
-    <!-- Resting state: warm image with gentle pulse -->
-    <div id="resting-screen">
-      <div id="resting-bg" aria-hidden="true"></div>
-      <div id="listening-pulse" aria-label="Anchor is listening"></div>
+
+    <!-- Ambient layer — warm lamplight glow + grain texture -->
+    <div id="ambient" aria-hidden="true">
+      <div id="lamp-glow"></div>
+      <div id="grain"></div>
     </div>
 
-    <!-- Speaking state: response text centred -->
+    <!-- Breathing ring — the heart of the interface -->
+    <div id="breathing-ring" aria-label="Anchor is here with you"></div>
+
+    <!-- Response layer — text appears here when Anchor speaks -->
     <div id="response-screen" hidden>
-      <p id="response-text"></p>
+      <div id="response-card">
+        <p id="response-text"></p>
+      </div>
     </div>
 
-    <!-- Fallback buttons (always visible, subtle at bottom) -->
+    <!-- Fallback buttons — always visible, warm cushions at the bottom -->
     <nav id="fallback-buttons" aria-label="Quick questions">
-      <button data-prompt="What day is it today?">What day is it?</button>
-      <button data-prompt="When is someone coming to see me?">When is someone coming?</button>
-      <button data-prompt="Can you play something I love?">Play something I love</button>
-      <button data-prompt="Is everything alright?">Is everything alright?</button>
+      <button data-prompt="What day is it today?">
+        <span class="btn-icon">🕐</span>
+        <span class="btn-label">What day is it?</span>
+      </button>
+      <button data-prompt="When is someone coming to see me?">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-label">When is someone coming?</span>
+      </button>
+      <button data-prompt="Can you play something I love?">
+        <span class="btn-icon">🎵</span>
+        <span class="btn-label">Play something I love</span>
+      </button>
+      <button data-prompt="Is everything alright?">
+        <span class="btn-icon">💙</span>
+        <span class="btn-label">Is everything alright?</span>
+      </button>
     </nav>
 
-    <!-- Optional demo overlay — shows carer notifications on main screen -->
-    <div id="carer-overlay" style="display:none; position:fixed; top:20px; right:20px; width:260px; height:180px; border:2px solid #c4b7a4; border-radius:12px; overflow:hidden; background:#fff; z-index:1000;">
-      <div style="font-size:11px; color:#888; padding:4px 8px; border-bottom:1px solid #eee;">Priya's phone</div>
-      <iframe src="/carer" style="width:100%; height:calc(100% - 22px); border:none;"></iframe>
+    <!-- Demo overlay — shows carer notifications on main screen during pitch -->
+    <div id="carer-overlay">
+      <div id="carer-overlay-label">Priya's phone</div>
+      <iframe id="carer-iframe" src="/carer"></iframe>
     </div>
+
   </main>
 
   <audio id="anchor-voice"></audio>
