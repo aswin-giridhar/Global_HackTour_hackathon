@@ -476,6 +476,74 @@
       font-style: italic;
       font-size: 13px;
     }
+
+    /* ─── Family manager panel ─── */
+    .family-panel {
+      margin: 12px 16px;
+      padding: 14px 16px;
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+      display: none;
+    }
+    .family-panel.open { display: block; }
+
+    .family-member-row {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(212, 197, 176, 0.3);
+    }
+    .family-member-row:first-of-type { border-top: none; }
+
+    .fam-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--sand);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .fam-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .fam-info {
+      min-width: 0;
+    }
+    .fam-info-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--brown-deep);
+    }
+    .fam-info-rel {
+      font-size: 11px;
+      color: var(--brown-soft);
+    }
+    .fam-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .fam-btn {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+      color: var(--brown-warm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .fam-btn:hover { border-color: var(--amber); }
+    .fam-btn.active { background: var(--terracotta); color: white; border-color: var(--terracotta); }
+    .fam-btn.has-content { color: var(--sage); border-color: rgba(142, 168, 118, 0.5); }
+    .fam-btn input[type="file"] { display: none; }
   </style>
 </head>
 <body>
@@ -514,6 +582,12 @@
     <a href="/logs">Health log</a>
     <a href="/safety">Safety &amp; location</a>
     <button id="toggle-schedule">Edit schedule</button>
+    <button id="toggle-family">Family messages</button>
+  </div>
+
+  <div class="family-panel" id="family-panel">
+    <div class="med-title">Photos &amp; voice messages</div>
+    <div id="family-manager-list"></div>
   </div>
 
   <div class="schedule-panel" id="schedule-panel">
@@ -764,6 +838,136 @@
     refreshActivity();
     setInterval(refreshDashboard, 5000);
     setInterval(refreshActivity,  5000);
+
+    // ─── Family manager (photos + voice messages) ───
+    const famPanel = document.getElementById('family-panel');
+    document.getElementById('toggle-family').addEventListener('click', () => {
+      famPanel.classList.toggle('open');
+      if (famPanel.classList.contains('open')) refreshFamilyManager();
+    });
+
+    async function refreshFamilyManager() {
+      const [famRes, photoRes, voiceRes] = await Promise.all([
+        fetch('/api/family'),
+        fetch('/api/family/photo').catch(() => null),
+        fetch('/api/family/voice').catch(() => null),
+      ]);
+      const fam = (await famRes.json()).family;
+      const photos = photoRes && photoRes.ok ? (await photoRes.json()).photos : {};
+      const voices = voiceRes && voiceRes.ok ? (await voiceRes.json()).voices : {};
+      const container = document.getElementById('family-manager-list');
+      container.innerHTML = fam.map(m => {
+        const hasPhoto = !!photos[m.name];
+        const hasVoice = !!voices[m.name];
+        const thumb = hasPhoto
+          ? `<img src="${photos[m.name]}?t=${Date.now()}" alt="">`
+          : `<div style="width:100%;height:100%;background:var(--cream);display:flex;align-items:center;justify-content:center;color:var(--brown-warm);font-weight:600;font-family:'Cormorant Garamond',serif;font-size:18px;">${m.name[0]}</div>`;
+        return `
+          <div class="family-member-row" data-name="${m.name}">
+            <div class="fam-thumb">${thumb}</div>
+            <div class="fam-info">
+              <div class="fam-info-name">${m.name}</div>
+              <div class="fam-info-rel">${m.relation}</div>
+            </div>
+            <div class="fam-actions">
+              <label class="fam-btn ${hasPhoto ? 'has-content' : ''}">
+                ${hasPhoto ? '✓ Photo' : '+ Photo'}
+                <input type="file" accept="image/*" data-kind="photo" data-name="${m.name}">
+              </label>
+              <button class="fam-btn record-btn ${hasVoice ? 'has-content' : ''}" data-name="${m.name}">
+                ${hasVoice ? '✓ Voice' : '+ Voice'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Wire photo uploads
+      container.querySelectorAll('input[data-kind="photo"]').forEach(inp => {
+        inp.addEventListener('change', async (e) => {
+          const file = inp.files[0];
+          if (!file) return;
+          const name = inp.dataset.name;
+          const fd = new FormData();
+          fd.append('file', file);
+          const label = inp.parentElement;
+          const prev = label.textContent.trim();
+          label.childNodes[0].textContent = '…uploading ';
+          try {
+            const res = await fetch(`/api/family/photo/${encodeURIComponent(name)}`, {
+              method: 'POST', body: fd,
+            });
+            if (!res.ok) throw new Error(await res.text());
+            refreshFamilyManager();
+          } catch (err) {
+            console.error(err);
+            label.childNodes[0].textContent = prev + ' (err)';
+          }
+        });
+      });
+
+      // Wire voice recording
+      container.querySelectorAll('.record-btn').forEach(btn => {
+        btn.addEventListener('click', () => startRecording(btn));
+      });
+    }
+
+    // ─── Voice recording via MediaRecorder ───
+    let activeRecorder = null;
+    let activeStream = null;
+    async function startRecording(btn) {
+      if (activeRecorder) {
+        stopRecording();
+        return;
+      }
+      const name = btn.dataset.name;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Voice recording not supported in this browser.');
+        return;
+      }
+      try {
+        activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        alert('Microphone access denied.');
+        return;
+      }
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
+      activeRecorder = new MediaRecorder(activeStream, mime ? { mimeType: mime } : {});
+      const chunks = [];
+      activeRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      activeRecorder.onstop = async () => {
+        btn.classList.remove('active');
+        btn.textContent = '…saving';
+        activeStream.getTracks().forEach(t => t.stop());
+        activeStream = null; activeRecorder = null;
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const fd = new FormData();
+        fd.append('file', blob, `${name}.webm`);
+        try {
+          const res = await fetch(`/api/family/voice/${encodeURIComponent(name)}`, {
+            method: 'POST', body: fd,
+          });
+          if (!res.ok) throw new Error(await res.text());
+          refreshFamilyManager();
+        } catch (err) {
+          console.error(err);
+          btn.textContent = 'err — retry';
+        }
+      };
+      activeRecorder.start();
+      btn.classList.add('active');
+      btn.textContent = '● Stop';
+      // auto-stop after 30s to avoid giant uploads
+      setTimeout(() => {
+        if (activeRecorder && activeRecorder.state === 'recording') stopRecording();
+      }, 30000);
+    }
+
+    function stopRecording() {
+      if (activeRecorder && activeRecorder.state === 'recording') activeRecorder.stop();
+    }
 
     // ─── Schedule editor ───
     const schedPanel = document.getElementById('schedule-panel');

@@ -100,15 +100,52 @@
       box-shadow: 0 12px 40px rgba(212, 165, 116, 0.28);
     }
 
-    /* Illustrated portrait — soft abstract face */
+    /* Portrait — real photo preferred, soft SVG illustration fallback */
     .portrait {
       width: 160px;
       height: 160px;
       margin: 0 auto 24px;
       position: relative;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--stone);
     }
 
     .portrait svg { width: 100%; height: 100%; display: block; }
+    .portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .voice-btn {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      border: 1px solid var(--amber);
+      background: var(--warm-white);
+      color: var(--brown-deep);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 44px;
+    }
+    .voice-btn:hover {
+      background: var(--amber);
+      color: white;
+    }
+    .voice-btn.playing {
+      background: var(--sage);
+      border-color: var(--sage);
+      color: white;
+    }
 
     .family-name {
       font-family: var(--font-display);
@@ -283,8 +320,14 @@
     }
 
     async function loadFamily() {
-      const res = await fetch('/api/family');
+      const [res, photosRes, voicesRes] = await Promise.all([
+        fetch('/api/family'),
+        fetch('/api/family/photo').catch(() => null),
+        fetch('/api/family/voice').catch(() => null),
+      ]);
       const data = await res.json();
+      const photos = photosRes && photosRes.ok ? (await photosRes.json()).photos : {};
+      const voices = voicesRes && voicesRes.ok ? (await voicesRes.json()).voices : {};
       const grid = document.getElementById('family-grid');
 
       // Sort: primary carer first, then daughters/sons, then grandchildren
@@ -327,16 +370,57 @@
           ? `<a class="call-btn" href="tel:${tel}" aria-label="Call ${member.name}"><span class="phone-icon">📞</span> Call ${member.name}</a>`
           : '';
 
+        const voiceUrl = voices[member.name];
+        const voiceBtn = voiceUrl
+          ? `<button class="voice-btn" data-voice="${voiceUrl}" data-name="${member.name}">🎙 Hear ${member.name}'s message</button>`
+          : '';
+
+        const portraitContent = photos[member.name]
+          ? `<img src="${photos[member.name]}" alt="${member.name}" onerror="this.outerHTML = &quot;${portraitSvg(member.name).replace(/"/g, '&quot;').replace(/\n/g, ' ')}&quot;;"/>`
+          : portraitSvg(member.name);
+
         return `
           <div class="family-card ${isPrimary ? 'primary' : ''}">
-            <div class="portrait">${portraitSvg(member.name)}</div>
+            <div class="portrait">${portraitContent}</div>
             <div class="family-name">${member.name}</div>
             <div class="family-relation">${member.relation}</div>
             <div class="family-meta-list">${metaHtml}</div>
             ${callBtn}
+            ${voiceBtn}
           </div>
         `;
       }).join('');
+
+      // Wire voice playback
+      const audio = new Audio();
+      let playingBtn = null;
+      grid.querySelectorAll('.voice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (playingBtn === btn) {
+            audio.pause();
+            btn.classList.remove('playing');
+            btn.textContent = `🎙 Hear ${btn.dataset.name}'s message`;
+            playingBtn = null;
+            return;
+          }
+          if (playingBtn) {
+            playingBtn.classList.remove('playing');
+            playingBtn.textContent = `🎙 Hear ${playingBtn.dataset.name}'s message`;
+          }
+          audio.src = btn.dataset.voice;
+          audio.play().catch(err => console.error('Playback blocked:', err));
+          btn.classList.add('playing');
+          btn.textContent = '⏸ Pause';
+          playingBtn = btn;
+        });
+      });
+      audio.addEventListener('ended', () => {
+        if (playingBtn) {
+          playingBtn.classList.remove('playing');
+          playingBtn.textContent = `🎙 Hear ${playingBtn.dataset.name}'s message`;
+          playingBtn = null;
+        }
+      });
     }
 
     loadFamily();

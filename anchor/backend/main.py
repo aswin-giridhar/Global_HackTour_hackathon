@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 sys.path.insert(0, str(Path(__file__).parent))
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -528,6 +528,140 @@ def dashboard_summary():
         "last_mood": last_mood,
         "conversations_today": len(today_convo),
     }
+
+
+# ─── Family photo uploads ────────────────────────────────────────────────
+
+ALLOWED_PHOTO_EXT = {".jpg", ".jpeg", ".png", ".webp"}
+MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5MB
+
+
+def _family_names() -> set[str]:
+    profile = _load_profile()
+    return {f["name"] for f in profile["family"] if f.get("status") != "deceased"}
+
+
+@app.post("/api/family/photo/{name}")
+async def upload_family_photo(name: str, file: UploadFile = File(...)):
+    """Carer uploads a real photo for a living family member."""
+    if name not in _family_names():
+        raise HTTPException(status_code=404, detail=f"No living family member named {name!r}")
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_PHOTO_EXT:
+        raise HTTPException(status_code=400, detail=f"Allowed: {sorted(ALLOWED_PHOTO_EXT)}")
+    data = await file.read()
+    if len(data) > MAX_PHOTO_BYTES:
+        raise HTTPException(status_code=413, detail="Photo must be ≤5MB")
+    photos_dir = Path("data/family_photos")
+    photos_dir.mkdir(parents=True, exist_ok=True)
+    # Clear any previous photo for this name with other extensions
+    for old in photos_dir.glob(f"{name}.*"):
+        old.unlink()
+    target = photos_dir / f"{name}{ext}"
+    target.write_bytes(data)
+    return {"ok": True, "name": name, "bytes": len(data)}
+
+
+@app.get("/api/family/photo/{name}")
+def get_family_photo(name: str):
+    """Serve the uploaded photo for a family member. 404 if none uploaded."""
+    photos_dir = Path("data/family_photos")
+    if not photos_dir.exists():
+        raise HTTPException(status_code=404, detail="No photo")
+    for ext in ALLOWED_PHOTO_EXT:
+        p = photos_dir / f"{name}{ext}"
+        if p.exists():
+            return FileResponse(p)
+    raise HTTPException(status_code=404, detail="No photo")
+
+
+@app.delete("/api/family/photo/{name}")
+def delete_family_photo(name: str):
+    photos_dir = Path("data/family_photos")
+    removed = 0
+    if photos_dir.exists():
+        for p in photos_dir.glob(f"{name}.*"):
+            p.unlink()
+            removed += 1
+    return {"ok": True, "removed": removed}
+
+
+# ─── Voice messages (family → patient) ───────────────────────────────────
+# Priya records a short voice note for Margaret; Margaret sees a tile on
+# /family with a "Play message" button. Storage is local filesystem.
+
+ALLOWED_AUDIO_EXT = {".webm", ".mp3", ".wav", ".ogg", ".m4a"}
+MAX_AUDIO_BYTES = 10 * 1024 * 1024  # 10MB
+
+
+@app.post("/api/family/voice/{name}")
+async def upload_family_voice(name: str, file: UploadFile = File(...)):
+    """Carer uploads a short reassurance message recorded in browser."""
+    if name not in _family_names():
+        raise HTTPException(status_code=404, detail=f"No living family member named {name!r}")
+    ext = Path(file.filename or "").suffix.lower() or ".webm"
+    if ext not in ALLOWED_AUDIO_EXT:
+        raise HTTPException(status_code=400, detail=f"Allowed: {sorted(ALLOWED_AUDIO_EXT)}")
+    data = await file.read()
+    if len(data) > MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="Audio must be ≤10MB")
+    vdir = Path("data/family_voices")
+    vdir.mkdir(parents=True, exist_ok=True)
+    for old in vdir.glob(f"{name}.*"):
+        old.unlink()
+    target = vdir / f"{name}{ext}"
+    target.write_bytes(data)
+    return {"ok": True, "name": name, "bytes": len(data)}
+
+
+@app.get("/api/family/voice/{name}")
+def get_family_voice(name: str):
+    vdir = Path("data/family_voices")
+    if not vdir.exists():
+        raise HTTPException(status_code=404, detail="No voice message")
+    for ext in ALLOWED_AUDIO_EXT:
+        p = vdir / f"{name}{ext}"
+        if p.exists():
+            return FileResponse(p)
+    raise HTTPException(status_code=404, detail="No voice message")
+
+
+@app.get("/api/family/voice")
+def list_family_voices():
+    """Lightweight listing so the family page knows who has a message."""
+    vdir = Path("data/family_voices")
+    if not vdir.exists():
+        return {"voices": {}}
+    voices = {}
+    for p in vdir.iterdir():
+        if p.suffix.lower() in ALLOWED_AUDIO_EXT:
+            voices[p.stem] = f"/api/family/voice/{p.stem}"
+    return {"voices": voices}
+
+
+@app.delete("/api/family/voice/{name}")
+def delete_family_voice(name: str):
+    vdir = Path("data/family_voices")
+    removed = 0
+    if vdir.exists():
+        for p in vdir.glob(f"{name}.*"):
+            p.unlink()
+            removed += 1
+    return {"ok": True, "removed": removed}
+
+
+@app.get("/api/family/photo")
+def list_family_photos():
+    """Which family members have an uploaded photo. Used by the family page
+    to decide whether to render the photo or fall back to the illustration."""
+    photos_dir = Path("data/family_photos")
+    if not photos_dir.exists():
+        return {"photos": {}}
+    photos = {}
+    for p in photos_dir.iterdir():
+        if p.suffix.lower() in ALLOWED_PHOTO_EXT:
+            photos[p.stem] = f"/api/family/photo/{p.stem}"
+    return {"photos": photos}
 
 
 # ─── Safety / location (honest placeholder, no fake GPS) ─────────────────
