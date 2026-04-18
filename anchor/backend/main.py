@@ -973,9 +973,19 @@ def carer_notifications():
     return read_notifications()
 
 
+def _check_demo_key(key: str | None) -> None:
+    """If DEMO_RESET_KEY is set, require the caller's key to match.
+    Unset env var → open (dev/local). This protects prod from accidental
+    or drive-by resets without breaking local scripts."""
+    expected = os.environ.get("DEMO_RESET_KEY")
+    if expected and key != expected:
+        raise HTTPException(status_code=403, detail="reset not authorised")
+
+
 @app.post("/api/reset")
-def reset():
+def reset(key: str | None = None):
     """Reset all data files for a clean demo."""
+    _check_demo_key(key)
     data_dir = Path("data")
     for fname in [
         "carer_notifications.json",
@@ -990,3 +1000,18 @@ def reset():
         fpath = data_dir / fname
         fpath.write_text("[]")
     return {"ok": True}
+
+
+@app.get("/demo")
+def demo_console(key: str | None = None):
+    """Password-gated control panel for clearing demo state on stage.
+
+    Gate: if DEMO_RESET_KEY env var is set, the `?key=` query param must match.
+    If the env var is unset (local dev), the page opens freely.
+
+    Deliberately unlinked from the rest of the UI — you reach it by typing
+    the URL, which is exactly what you want for a break-glass tool."""
+    expected = os.environ.get("DEMO_RESET_KEY")
+    if expected and key != expected:
+        return FileResponse("frontend/demo_locked.html", status_code=403)
+    return FileResponse("frontend/demo.html")
