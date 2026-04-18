@@ -95,29 +95,29 @@
   },
   "scheduled_events": [
     {
-      "when": "Thursday 24th, 15:00",
+      "when": "Thursday 23rd, 15:00",
       "what": "Priya visits with James"
     },
     {
-      "when": "Tuesday 22nd, 10:30",
+      "when": "Tuesday 21st, 10:30",
       "what": "GP appointment \u2014 Priya will take her"
     },
     {
-      "when": "Saturday 26th",
+      "when": "Saturday 25th",
       "what": "James's school play \u2014 Priya may bring a video"
     },
     {
-      "when": "Sunday 20th, 14:00",
+      "when": "Sunday 26th, 14:00",
       "what": "David's weekly phone call"
     }
   ],
   "recent_events": [
     {
-      "when": "Thursday 17th",
+      "when": "Thursday 16th",
       "what": "Priya visited, brought shortbread, James showed drawing of a dog"
     },
     {
-      "when": "Monday 14th",
+      "when": "Monday 13th",
       "what": "Slight agitation after dinner, settled with Vera Lynn"
     }
   ],
