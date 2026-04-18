@@ -242,37 +242,40 @@ def verify_grounded(response: str, memory_block: str) -> tuple[bool, str]:
     Check that any NAMED person, date, or specific fact in the response
     appears in the memory block. Returns (is_grounded, reason).
 
+    Implementation: scan for capitalised words that appear MID-sentence only.
+    Sentence-initial capitalisation is normal English ("Sounds like a long day"),
+    not a proper-noun claim, so we skip those to avoid false positives on
+    warm responses to emotional utterances like "I feel sleepy". Invented
+    names almost always surface mid-sentence ("your friend Barbara", "in
+    Chorlton"), which is where this check still fires.
+
     This is the single most important safety feature in the whole system.
     """
     memory_lower = memory_block.lower()
 
-    # 1. Check named people — every capitalised name in the response
-    #    must appear somewhere in the memory block
-    names_in_response = set(re.findall(r"\b[A-Z][a-z]{2,}\b", response))
-    # Strip common sentence-starters and English words that happen to capitalise
-    common_words = {
-        "I", "We", "You", "She", "He", "They", "The", "That", "This",
-        "It", "Shall", "What", "When", "Where", "Who", "How", "Today",
-        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-        "Saturday", "Sunday", "January", "February", "March", "April",
-        "May", "June", "July", "August", "September", "October",
-        "November", "December", "Anchor", "Yes", "No", "Let", "Would",
-        "Here", "There",
+    # Mid-sentence capitalised English words that aren't proper-noun claims.
+    # Kept small — the sentence-boundary skip below does most of the work.
+    common_midsentence = {
+        "I", "We", "You", "She", "He", "They", "It",
+        "God", "Lord",  # appear in hymn names and in Margaret's exclamations
     }
-    names_to_check = names_in_response - common_words
-    for name in names_to_check:
+
+    # Characters that end a sentence. Anything after one of these (plus
+    # whitespace) is treated as sentence-initial.
+    sentence_enders = {".", "!", "?", "…", ":", "—"}
+
+    for match in re.finditer(r"\b[A-Z][a-z]{2,}\b", response):
+        prefix = response[:match.start()].rstrip()
+        # Strip trailing quote/paren which can sit between punct and the word
+        while prefix and prefix[-1] in "\"'‘’“”()":
+            prefix = prefix[:-1].rstrip()
+        if not prefix or prefix[-1] in sentence_enders:
+            continue  # sentence-initial — normal capitalisation, not a claim
+        name = match.group()
+        if name in common_midsentence:
+            continue
         if name.lower() not in memory_lower:
             return False, f"Ungrounded name: {name}"
-
-    # 2. Refuse-patterns are always acceptable
-    refuse_signals = [
-        "I don't have that written down",
-        "let's ask Priya",
-        "I'm not sure",
-        "shall we ask",
-    ]
-    if any(s in response for s in refuse_signals):
-        return True, "ok"
 
     return True, "ok"
 

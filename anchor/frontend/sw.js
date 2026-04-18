@@ -12,7 +12,7 @@
  *    elements stay warm.
  */
 
-const VERSION = 'anchor-v1-2026-04-18';
+const VERSION = 'anchor-v2-2026-04-18';
 const SHELL_CACHE = `${VERSION}-shell`;
 const API_CACHE   = `${VERSION}-api`;
 
@@ -74,8 +74,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith((async () => {
       try {
         const resp = await fetch(req);
-        // Only cache success + GET; never cache escalation or mutating endpoints
-        if (resp.ok) {
+        // Only cache success + GET; never cache escalation or mutating endpoints.
+        // status === 200 (not resp.ok) because Cache API rejects 206 Partial Content,
+        // which audio range requests return.
+        if (resp.status === 200) {
           const cache = await caches.open(API_CACHE);
           cache.put(req, resp.clone());
         }
@@ -97,7 +99,8 @@ self.addEventListener('fetch', (event) => {
     const cache = await caches.open(SHELL_CACHE);
     const cached = await cache.match(req);
     const networkFetch = fetch(req).then((resp) => {
-      if (resp.ok) cache.put(req, resp.clone());
+      // Skip 206 Partial Content (audio range requests) — Cache API throws on them.
+      if (resp.status === 200) cache.put(req, resp.clone());
       return resp;
     }).catch(() => cached);
     return cached || networkFetch;
