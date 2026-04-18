@@ -77,6 +77,13 @@ def patient_interface():
     return FileResponse("frontend/index.html")
 
 
+@app.get("/favicon.ico")
+def favicon():
+    """Serve favicon at root so browsers (and crawlers) find it without
+    a redirect, and so /favicon.ico stops showing 404 in the console."""
+    return FileResponse("frontend/assets/icons/favicon.ico", media_type="image/x-icon")
+
+
 @app.get("/sw.js")
 def service_worker():
     """Serve the service worker at root scope so it can control all pages.
