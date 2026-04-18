@@ -39,8 +39,18 @@
   ],
   "routine": {
     "wake": "07:00",
-    "medication_morning": {"time": "08:00", "drug": "Donepezil", "dose": "10mg", "location": "kitchen, blue case", "notes": "Priya marks the tracker after visits"},
-    "medication_evening": {"time": "20:00", "drug": "Donepezil", "dose": "5mg"},
+    "medication_morning": {
+      "time": "08:00",
+      "drug": "Donepezil",
+      "dose": "10mg",
+      "location": "kitchen, blue case",
+      "notes": "Priya marks the tracker after visits"
+    },
+    "medication_evening": {
+      "time": "20:00",
+      "drug": "Donepezil",
+      "dose": "5mg"
+    },
     "tea": "10:00",
     "lunch": "12:30",
     "dinner": "18:00",
@@ -48,15 +58,34 @@
     "bedtime": "21:30"
   },
   "preferences": {
-    "music": ["Vera Lynn", "wartime songs", "hymns"],
-    "food": ["strong tea one sugar", "shortbread", "scrambled eggs"],
-    "dislikes": ["loud voices", "the news on too loud", "being rushed"],
-    "comforts": ["window seat overlooking the garden", "the blue blanket"]
+    "music": [
+      "Vera Lynn",
+      "wartime songs",
+      "hymns"
+    ],
+    "food": [
+      "strong tea one sugar",
+      "shortbread",
+      "scrambled eggs"
+    ],
+    "dislikes": [
+      "loud voices",
+      "the news on too loud",
+      "being rushed"
+    ],
+    "comforts": [
+      "window seat overlooking the garden",
+      "the blue blanket"
+    ]
   },
   "history": {
     "grew_up_in": "Eccles",
     "profession": "librarian, 30 years at Salford Central Library",
-    "hobbies_past": ["reading mystery novels", "baking", "garden"],
+    "hobbies_past": [
+      "reading mystery novels",
+      "baking",
+      "garden"
+    ],
     "meaningful_memories": [
       "Met Robert at a Palais dance, 1971",
       "Priya was born 1976",
@@ -65,20 +94,38 @@
     ]
   },
   "scheduled_events": [
-    {"when": "Thursday 24th, 15:00", "what": "Priya visits with James"},
-    {"when": "Tuesday 22nd, 10:30", "what": "GP appointment — Priya will take her"},
-    {"when": "Saturday 26th", "what": "James's school play — Priya may bring a video"},
-    {"when": "Sunday 20th, 14:00", "what": "David's weekly phone call"}
+    {
+      "when": "Thursday 24th, 15:00",
+      "what": "Priya visits with James"
+    },
+    {
+      "when": "Tuesday 22nd, 10:30",
+      "what": "GP appointment \u2014 Priya will take her"
+    },
+    {
+      "when": "Saturday 26th",
+      "what": "James's school play \u2014 Priya may bring a video"
+    },
+    {
+      "when": "Sunday 20th, 14:00",
+      "what": "David's weekly phone call"
+    }
   ],
   "recent_events": [
-    {"when": "Thursday 17th", "what": "Priya visited, brought shortbread, James showed drawing of a dog"},
-    {"when": "Monday 14th", "what": "Slight agitation after dinner, settled with Vera Lynn"}
+    {
+      "when": "Thursday 17th",
+      "what": "Priya visited, brought shortbread, James showed drawing of a dog"
+    },
+    {
+      "when": "Monday 14th",
+      "what": "Slight agitation after dinner, settled with Vera Lynn"
+    }
   ],
   "care_notes": [
     "Margaret has early-stage Alzheimer's, diagnosed 2023",
     "She retains long-term memory well, struggles with short-term",
-    "Repetition is frequent — especially 'when is Priya coming' and 'what day is it'",
-    "Sometimes speaks of Robert as if alive — DO NOT correct, redirect gently",
+    "Repetition is frequent \u2014 especially 'when is Priya coming' and 'what day is it'",
+    "Sometimes speaks of Robert as if alive \u2014 DO NOT correct, redirect gently",
     "Becomes distressed if she cannot find familiar objects or people"
   ]
 }

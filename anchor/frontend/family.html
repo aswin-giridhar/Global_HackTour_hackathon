@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Family</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    html, body { overflow: auto; }
+    body { background: var(--cream); }
+
+    .family-page {
+      min-height: 100vh;
+      padding: 48px 32px 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .family-title {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 5vw, 56px);
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .family-subtitle {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 24px;
+      color: var(--brown-soft);
+      margin-bottom: 48px;
+      text-align: center;
+    }
+
+    .family-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+      gap: 32px;
+      max-width: 1100px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .family-card {
+      background: var(--warm-white);
+      border: 1px solid var(--sand);
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 4px 20px var(--shadow-warm);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto 0;
+      padding: 14px 28px;
+      border-radius: 100px;
+      background: var(--sage);
+      color: white;
+      text-decoration: none;
+      font-family: var(--font-ui);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 4px 14px rgba(142, 168, 118, 0.35);
+      transition: all 0.2s ease;
+      min-width: 180px;
+      min-height: 54px;
+    }
+
+    .call-btn:hover {
+      background: var(--sage-light);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(142, 168, 118, 0.45);
+    }
+
+    .call-btn .phone-icon { font-size: 20px; }
+
+    .family-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(212, 165, 116, 0.2);
+    }
+
+    .avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 54px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      background: radial-gradient(circle at 30% 30%, var(--cream), var(--stone));
+      border: 2px solid var(--sand);
+      box-shadow: inset 0 0 24px rgba(212, 165, 116, 0.2);
+    }
+
+    .family-card:nth-child(3n+1) .avatar { background: radial-gradient(circle at 30% 30%, #FBF1DE, var(--stone)); }
+    .family-card:nth-child(3n+2) .avatar { background: radial-gradient(circle at 30% 30%, #F4E4CC, var(--sand)); }
+    .family-card:nth-child(3n+3) .avatar { background: radial-gradient(circle at 30% 30%, #EFE4D2, #D8C8A8); }
+
+    .family-name {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 4px;
+    }
+
+    .family-relation {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 20px;
+      color: var(--brown-soft);
+      margin-bottom: 16px;
+    }
+
+    .family-role {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(142, 168, 118, 0.14);
+      color: var(--sage);
+      margin-bottom: 14px;
+    }
+
+    .family-meta {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--brown-warm);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .family-meta strong { color: var(--brown-deep); }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--brown-warm);
+      text-decoration: none;
+      margin-top: 48px;
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+      transition: all 0.25s ease;
+    }
+
+    .back-link:hover {
+      border-color: var(--amber);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--shadow-warm);
+    }
+  </style>
+</head>
+<body>
+  <div class="family-page">
+    <h1 class="family-title">Your family</h1>
+    <p class="family-subtitle">The people who love you most</p>
+    <div class="family-grid" id="family-grid"></div>
+    <a href="/" class="back-link">&larr; Back to Anchor</a>
+  </div>
+
+  <script>
+    async function loadFamily() {
+      const res = await fetch('/api/family');
+      const data = await res.json();
+      const grid = document.getElementById('family-grid');
+      // Mock phone numbers for the prototype — real deployment reads from profile
+      const PROTOTYPE_NUMBERS = {
+        Priya: '+441612345678',
+        David: '+441132987654',
+        James: '+441612345679',
+      };
+      grid.innerHTML = data.family.map(member => {
+        const initial = member.name.charAt(0).toUpperCase();
+        const tel = PROTOTYPE_NUMBERS[member.name] || '';
+        const visitLine = member.visits
+          ? `<div class="family-meta"><strong>Visits:</strong> ${member.visits}</div>`
+          : '';
+        const locationLine = member.location
+          ? `<div class="family-meta"><strong>Lives in:</strong> ${member.location}</div>`
+          : '';
+        const roleBadge = member.role
+          ? `<div class="family-role">${member.role}</div>`
+          : '';
+        const notes = member.notes
+          ? `<div class="family-meta"><em>${member.notes}</em></div>`
+          : '';
+        const callBtn = tel
+          ? `<a class="call-btn" href="tel:${tel}" aria-label="Call ${member.name}"><span class="phone-icon">📞</span> Call ${member.name}</a>`
+          : '';
+        return `
+          <div class="family-card">
+            <div class="avatar">${initial}</div>
+            <div class="family-name">${member.name}</div>
+            <div class="family-relation">${member.relation}</div>
+            ${roleBadge}
+            ${locationLine}
+            ${visitLine}
+            ${notes}
+            ${callBtn}
+          </div>
+        `;
+      }).join('');
+    }
+    loadFamily();
+  </script>
+</body>
+</html>

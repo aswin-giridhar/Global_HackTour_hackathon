@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Safety (carer view)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    html, body { overflow: auto; }
+    body { background: var(--warm-white); font-family: var(--font-ui); }
+
+    .safety-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+
+    .safety-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 500;
+      color: var(--brown-deep);
+    }
+
+    .prototype-pill {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--terracotta);
+      background: rgba(196, 122, 84, 0.1);
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid rgba(196, 122, 84, 0.3);
+    }
+
+    .tagline {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 20px;
+      color: var(--brown-soft);
+      margin-bottom: 32px;
+    }
+
+    .map-card {
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 4px 20px var(--shadow-warm);
+      margin-bottom: 24px;
+    }
+
+    .map-svg {
+      display: block;
+      width: 100%;
+      height: 360px;
+      background: var(--cream);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .map-legend {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: var(--brown-warm);
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .legend-home { background: var(--sage); }
+    .legend-zone { background: rgba(142, 168, 118, 0.2); border: 2px dashed var(--sage); }
+    .legend-current { background: var(--amber); box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.3); }
+
+    .status-banner {
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: rgba(142, 168, 118, 0.1);
+      border: 1px solid rgba(142, 168, 118, 0.3);
+      color: var(--brown-deep);
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .status-banner strong { color: var(--sage); }
+
+    .honesty-box {
+      padding: 20px 24px;
+      background: var(--cream);
+      border: 1px solid var(--sand);
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--brown-warm);
+      margin-bottom: 24px;
+    }
+
+    .honesty-box strong { color: var(--brown-deep); }
+    .honesty-box ul { margin: 10px 0 0 20px; }
+
+    .sim-btn {
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 100px;
+      border: 1px solid var(--terracotta);
+      background: var(--warm-white);
+      color: var(--terracotta);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sim-btn:hover {
+      background: var(--terracotta);
+      color: white;
+    }
+
+    .sim-result {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--sage);
+    }
+  </style>
+</head>
+<body>
+  <div class="safety-page">
+    <div class="safety-header">
+      <h1>Safety &amp; location</h1>
+      <span class="prototype-pill">Prototype preview</span>
+    </div>
+    <p class="tagline">Where Margaret is, and what to do if she wanders.</p>
+
+    <div class="status-banner">
+      <strong>Currently:</strong> Margaret is at home, inside her safe zone.
+    </div>
+
+    <div class="map-card">
+      <svg class="map-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+        <!-- background streets -->
+        <rect width="800" height="400" fill="#F5EDE0"/>
+        <g stroke="#D4C5B0" stroke-width="1" fill="none">
+          <path d="M 0 120 L 800 140"/>
+          <path d="M 0 200 L 800 210"/>
+          <path d="M 0 280 L 800 290"/>
+          <path d="M 160 0 L 180 400"/>
+          <path d="M 400 0 L 400 400"/>
+          <path d="M 600 0 L 620 400"/>
+        </g>
+        <!-- Safe zone (500m radius) -->
+        <circle cx="400" cy="200" r="140"
+                fill="rgba(142,168,118,0.12)"
+                stroke="#8EA876" stroke-width="2" stroke-dasharray="6,6"/>
+        <text x="400" y="60" font-family="DM Sans" font-size="12" fill="#7A6352"
+              text-anchor="middle">500 m safe zone</text>
+        <!-- Home marker -->
+        <circle cx="400" cy="200" r="10" fill="#8EA876"/>
+        <circle cx="400" cy="200" r="18" fill="none" stroke="#8EA876" stroke-opacity="0.3" stroke-width="2"/>
+        <text x="400" y="235" font-family="Cormorant Garamond" font-size="18" fill="#3D2B1F"
+              text-anchor="middle">Margaret's home</text>
+        <!-- Current location (same as home now) -->
+        <circle cx="400" cy="200" r="6" fill="#D4A574">
+          <animate attributeName="r" from="6" to="14" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" from="1" to="0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Compass -->
+        <g transform="translate(730, 40)" font-family="DM Sans" font-size="10" fill="#7A6352">
+          <circle r="22" fill="white" stroke="#D4C5B0"/>
+          <text y="-8" text-anchor="middle">N</text>
+          <text y="18" text-anchor="middle">S</text>
+        </g>
+      </svg>
+      <div class="map-legend">
+        <div class="legend-item"><span class="legend-dot legend-home"></span>Home</div>
+        <div class="legend-item"><span class="legend-dot legend-zone"></span>Safe zone (500m)</div>
+        <div class="legend-item"><span class="legend-dot legend-current"></span>Current location</div>
+      </div>
+    </div>
+
+    <div class="honesty-box">
+      <strong>About this view</strong>
+      <p style="margin-top:8px">
+        Real-time location tracking requires the Anchor <em>mobile</em> companion
+        (iOS/Android), which is out of scope for this hackathon prototype.
+        This page shows what a carer would see with the mobile app paired:
+      </p>
+      <ul>
+        <li>Live GPS position updated every 30 seconds</li>
+        <li>Geofenced safe-zone breach alerts (wandering detection)</li>
+        <li>Last-seen timestamp if connectivity drops</li>
+      </ul>
+      <p style="margin-top:10px">
+        The simulate button below fires the same carer escalation that a real
+        safe-zone breach would — useful for demoing the alert chain end-to-end.
+      </p>
+    </div>
+
+    <button class="sim-btn" id="sim-btn">Simulate safe-zone breach</button>
+    <div class="sim-result" id="sim-result"></div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('sim-btn');
+    const out = document.getElementById('sim-result');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        const res = await fetch('/api/safety/simulate_wandering', { method: 'POST' });
+        if (!res.ok) throw new Error('request failed');
+        out.textContent = '✓ Wandering alert fired. Check Priya\'s view.';
+        btn.textContent = 'Simulate again';
+      } catch (e) {
+        out.textContent = 'Error firing alert — check the server log.';
+        btn.textContent = 'Retry';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

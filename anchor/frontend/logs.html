@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Health log (carer)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    html, body { overflow: auto; }
+    body { background: var(--warm-white); font-family: var(--font-ui); }
+
+    .logs-page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 6px;
+    }
+
+    .tagline {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 20px;
+      color: var(--brown-soft);
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 18px var(--shadow-warm);
+    }
+
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brown-warm);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .mood-btn {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--sand);
+      background: var(--cream);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mood-btn:hover { border-color: var(--amber); }
+    .mood-btn.active {
+      background: var(--sage);
+      color: white;
+      border-color: var(--sage);
+    }
+
+    input[type="number"], textarea {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--sand);
+      background: var(--cream);
+      color: var(--brown-deep);
+      width: 100%;
+      resize: vertical;
+    }
+
+    .submit {
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 100px;
+      border: none;
+      background: var(--amber);
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .submit:hover { background: var(--terracotta); }
+    .submit:disabled { opacity: 0.6; cursor: default; }
+
+    .entry {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--stone);
+      font-size: 14px;
+      color: var(--brown-warm);
+    }
+
+    .entry:last-child { border-bottom: none; }
+    .entry-time {
+      font-size: 12px;
+      color: var(--brown-soft);
+      margin-bottom: 4px;
+    }
+    .entry-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-right: 6px;
+      background: rgba(212, 165, 116, 0.15);
+      color: var(--brown-warm);
+    }
+    .entry-badge.mood    { background: rgba(142, 168, 118, 0.15); color: var(--sage); }
+    .entry-badge.sleep   { background: rgba(142, 168, 118, 0.15); color: var(--sage); }
+    .entry-badge.incident{ background: rgba(196, 122, 84, 0.15); color: var(--terracotta); }
+
+    .back-link {
+      display: inline-flex;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--brown-warm);
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+    }
+  </style>
+</head>
+<body>
+  <div class="logs-page">
+    <h1>Margaret's health log</h1>
+    <p class="tagline">Mood, sleep, and anything worth telling the GP.</p>
+
+    <div class="card">
+      <h2>Log a mood check-in</h2>
+      <div class="field">
+        <label>How is Margaret right now?</label>
+        <div class="mood-grid" id="mood-grid">
+          <button class="mood-btn" data-mood="good">Good</button>
+          <button class="mood-btn" data-mood="settled">Settled</button>
+          <button class="mood-btn" data-mood="agitated">Agitated</button>
+          <button class="mood-btn" data-mood="tearful">Tearful</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Sleep last night (hours)</label>
+        <input type="number" id="sleep" min="0" max="16" step="0.5" placeholder="e.g. 7.5">
+      </div>
+      <div class="field">
+        <label>Notes for the GP (optional)</label>
+        <textarea id="note" rows="3" placeholder="e.g. Refused breakfast; unusually quiet after lunch."></textarea>
+      </div>
+      <button class="submit" id="submit-btn">Save entry</button>
+      <span id="save-msg" style="margin-left: 14px; color: var(--sage); font-size: 13px;"></span>
+    </div>
+
+    <div class="card">
+      <h2>Recent entries</h2>
+      <div id="entries"></div>
+    </div>
+
+    <a href="/carer" class="back-link">&larr; Back to carer view</a>
+  </div>
+
+  <script>
+    let selectedMood = null;
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.mood-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        selectedMood = b.dataset.mood;
+      });
+    });
+
+    async function loadEntries() {
+      const res = await fetch('/api/log/behavior');
+      const data = await res.json();
+      const container = document.getElementById('entries');
+      if (!data.entries.length) {
+        container.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No entries yet.</p>';
+        return;
+      }
+      container.innerHTML = data.entries.slice().reverse().map(e => {
+        const t = new Date(e.time).toLocaleString('en-GB', {
+          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+        const parts = [];
+        if (e.mood)        parts.push(`<span class="entry-badge mood">Mood</span>${e.mood}`);
+        if (e.sleep_hours != null) parts.push(`<span class="entry-badge sleep">Sleep</span>${e.sleep_hours}h`);
+        if (e.note)        parts.push(`<span class="entry-badge ${e.category||''}">${e.category||'note'}</span>${e.note}`);
+        return `<div class="entry"><div class="entry-time">${t}</div><div>${parts.join(' &nbsp;·&nbsp; ')}</div></div>`;
+      }).join('');
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('submit-btn');
+      const msg = document.getElementById('save-msg');
+      btn.disabled = true; msg.textContent = '';
+      const sleep = parseFloat(document.getElementById('sleep').value);
+      const note = document.getElementById('note').value.trim();
+      const body = {
+        mood: selectedMood,
+        sleep_hours: isNaN(sleep) ? null : sleep,
+        note: note || null,
+        category: note ? 'note' : (selectedMood ? 'mood' : 'note'),
+      };
+      try {
+        const res = await fetch('/api/log/behavior', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error();
+        msg.textContent = '✓ Saved';
+        document.getElementById('note').value = '';
+        document.getElementById('sleep').value = '';
+        document.querySelectorAll('.mood-btn').forEach(x => x.classList.remove('active'));
+        selectedMood = null;
+        loadEntries();
+      } catch {
+        msg.textContent = 'Save failed';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    loadEntries();
+  </script>
+</body>
+</html>

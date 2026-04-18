@@ -278,6 +278,186 @@ body {
   line-height: 1;
 }
 
+/* ─── Daily brief — proactive "today" card ─── */
+#daily-brief {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  text-align: center;
+  padding: 16px 32px;
+  max-width: 680px;
+  pointer-events: none;  /* decorative; ring still clickable through it */
+  transition: opacity var(--transition);
+}
+
+.speaking #daily-brief,
+.resting.listening #daily-brief {
+  opacity: 0.35;
+}
+
+#brief-greeting {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(20px, 2.2vw, 26px);
+  color: var(--brown-soft);
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+#brief-date {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 500;
+  color: var(--brown-deep);
+  margin-bottom: 8px;
+}
+
+#brief-next {
+  font-family: var(--font-ui);
+  font-size: clamp(14px, 1.3vw, 16px);
+  color: var(--brown-warm);
+  line-height: 1.4;
+}
+
+#brief-next strong { color: var(--brown-deep); font-weight: 600; }
+
+/* ─── Patient nav (top-right) ─── */
+#patient-nav {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+}
+
+.nav-link {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--brown-warm);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 100px;
+  background: var(--warm-white);
+  border: 1px solid var(--sand);
+  transition: all 0.25s ease;
+  opacity: 0.85;
+}
+
+.nav-link:hover {
+  opacity: 1;
+  border-color: var(--amber);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-warm);
+}
+
+.speaking #patient-nav,
+.resting.listening #patient-nav {
+  opacity: 0.25;
+}
+
+/* ─── Reminder overlay ─── */
+#reminder-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(245, 237, 224, 0.92);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.5s ease;
+}
+
+#reminder-overlay[hidden] { display: none; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#reminder-card {
+  background: var(--warm-white);
+  border: 1px solid var(--amber);
+  border-radius: 24px;
+  padding: 48px 56px;
+  max-width: 640px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(212, 165, 116, 0.25);
+  animation: reminder-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes reminder-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+#reminder-kind {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+  margin-bottom: 16px;
+}
+
+#reminder-label {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 500;
+  color: var(--brown-deep);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+#reminder-detail {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--brown-soft);
+  margin-bottom: 32px;
+}
+
+#reminder-confirm {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 18px 48px;
+  border-radius: 100px;
+  border: none;
+  background: var(--sage);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(142, 168, 118, 0.4);
+  margin-right: 12px;
+  transition: all 0.2s ease;
+}
+
+#reminder-confirm:hover {
+  background: var(--sage-light);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(142, 168, 118, 0.5);
+}
+
+#reminder-dismiss {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 16px 28px;
+  border-radius: 100px;
+  border: 1px solid var(--sand);
+  background: transparent;
+  color: var(--brown-warm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#reminder-dismiss:hover { border-color: var(--brown-warm); }
+
 /* ─── Carer overlay (demo mode) ─── */
 #carer-overlay {
   display: none;

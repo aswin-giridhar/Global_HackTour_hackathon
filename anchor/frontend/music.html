@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Music</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    html, body { overflow: auto; }
+    body { background: var(--cream); }
+
+    .music-page {
+      min-height: 100vh;
+      padding: 48px 32px 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .music-title {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 5vw, 56px);
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 6px;
+    }
+
+    .music-subtitle {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--brown-soft);
+      margin-bottom: 40px;
+    }
+
+    .track-list {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .track-card {
+      background: var(--warm-white);
+      border: 1px solid var(--sand);
+      border-radius: 18px;
+      padding: 22px 26px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 4px 18px var(--shadow-warm);
+      transition: all 0.25s ease;
+    }
+
+    .track-card.playing {
+      border-color: var(--amber);
+      box-shadow: 0 6px 28px rgba(212, 165, 116, 0.28);
+    }
+
+    .track-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--amber-glow), var(--amber));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(212, 165, 116, 0.3);
+    }
+
+    .track-info { flex: 1; }
+
+    .track-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      line-height: 1.2;
+    }
+
+    .track-sub {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--brown-soft);
+      margin-top: 4px;
+    }
+
+    .track-play {
+      min-width: 110px;
+      min-height: 48px;
+      border-radius: 100px;
+      border: 1px solid var(--amber);
+      background: var(--warm-white);
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--brown-deep);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .track-play:hover {
+      background: var(--amber);
+      color: white;
+    }
+
+    .track-card.playing .track-play {
+      background: var(--sage);
+      border-color: var(--sage);
+      color: white;
+    }
+
+    .licensing-note {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--brown-soft);
+      text-align: center;
+      max-width: 600px;
+      margin-top: 32px;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--brown-warm);
+      text-decoration: none;
+      margin-top: 32px;
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+    }
+  </style>
+</head>
+<body>
+  <div class="music-page">
+    <h1 class="music-title">A little music, love</h1>
+    <p class="music-subtitle">Tap any tune to play</p>
+    <div class="track-list" id="track-list"></div>
+    <p class="licensing-note" id="licensing-note"></p>
+    <a href="/" class="back-link">&larr; Back to Anchor</a>
+  </div>
+
+  <audio id="player" preload="none"></audio>
+
+  <script>
+    const player = document.getElementById('player');
+    let playingId = null;
+
+    async function loadTracks() {
+      const res = await fetch('/api/music/tracks');
+      const data = await res.json();
+      const list = document.getElementById('track-list');
+      list.innerHTML = data.tracks.map(t => `
+        <div class="track-card" data-id="${t.id}">
+          <div class="track-icon">♪</div>
+          <div class="track-info">
+            <div class="track-title">${t.title}</div>
+            <div class="track-sub">${t.subtitle}</div>
+          </div>
+          <button class="track-play" data-url="${t.url}" data-id="${t.id}">Play</button>
+        </div>
+      `).join('');
+      document.getElementById('licensing-note').textContent = data.note;
+
+      list.querySelectorAll('.track-play').forEach(btn => {
+        btn.addEventListener('click', () => toggle(btn.dataset.url, btn.dataset.id));
+      });
+    }
+
+    function toggle(url, id) {
+      if (playingId === id) {
+        player.pause();
+        setState(null);
+        return;
+      }
+      player.src = url;
+      player.play().catch(err => console.error('Playback blocked:', err));
+      setState(id);
+    }
+
+    function setState(id) {
+      playingId = id;
+      document.querySelectorAll('.track-card').forEach(card => {
+        const active = card.dataset.id === id;
+        card.classList.toggle('playing', active);
+        const btn = card.querySelector('.track-play');
+        btn.textContent = active ? 'Pause' : 'Play';
+      });
+    }
+
+    player.addEventListener('ended', () => setState(null));
+
+    loadTracks();
+  </script>
+</body>
+</html>

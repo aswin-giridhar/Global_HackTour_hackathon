@@ -16,6 +16,101 @@ if (new URLSearchParams(window.location.search).has('demo')) {
   document.getElementById('carer-overlay').style.display = 'block';
 }
 
+// ─── Daily brief — proactive "what's today" card ───
+async function loadDailyBrief() {
+  try {
+    const res = await fetch('/api/daily_brief');
+    const d = await res.json();
+    const greetings = { morning: 'Good morning, love', afternoon: 'Good afternoon, love', evening: 'Good evening, love' };
+    document.getElementById('brief-greeting').textContent = greetings[d.part_of_day] || 'Hello, love';
+    document.getElementById('brief-date').textContent = `${d.day}, ${d.date}`;
+    if (d.next_event) {
+      document.getElementById('brief-next').innerHTML =
+        `Coming up — <strong>${d.next_event.when}</strong>: ${d.next_event.what}`;
+    }
+  } catch (e) {
+    console.warn('[Anchor] Daily brief unavailable:', e);
+  }
+}
+loadDailyBrief();
+
+// ─── Proactive reminder overlay ───
+const reminderOverlay = document.getElementById('reminder-overlay');
+const reminderKind    = document.getElementById('reminder-kind');
+const reminderLabel   = document.getElementById('reminder-label');
+const reminderDetail  = document.getElementById('reminder-detail');
+const reminderConfirm = document.getElementById('reminder-confirm');
+const reminderDismiss = document.getElementById('reminder-dismiss');
+
+const KIND_TITLES = {
+  medication: 'Time for your medicine',
+  meal:       'Time for a meal',
+  water:      'A little drink of water',
+};
+
+let currentReminder = null;
+let dismissedThisSession = new Set();  // slot → dismissed until refresh
+
+function showReminder(r) {
+  if (dismissedThisSession.has(r.slot)) return;
+  if (currentReminder && currentReminder.slot === r.slot) return;
+  currentReminder = r;
+  reminderKind.textContent = KIND_TITLES[r.kind] || 'A gentle reminder';
+  reminderLabel.textContent = r.label;
+  reminderDetail.textContent = r.detail || `Scheduled ${r.time}`;
+  reminderOverlay.hidden = false;
+}
+
+function hideReminder() {
+  reminderOverlay.hidden = true;
+  currentReminder = null;
+}
+
+reminderConfirm.addEventListener('click', async () => {
+  if (!currentReminder) return hideReminder();
+  const { kind, slot } = currentReminder;
+  reminderConfirm.disabled = true;
+  try {
+    await fetch('/api/reminders/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slot, kind, marked_by: 'patient' }),
+    });
+  } catch (e) {
+    console.warn('[Anchor] Reminder confirm failed:', e);
+  } finally {
+    reminderConfirm.disabled = false;
+    hideReminder();
+  }
+});
+
+reminderDismiss.addEventListener('click', () => {
+  if (currentReminder) dismissedThisSession.add(currentReminder.slot);
+  hideReminder();
+});
+
+async function checkReminders() {
+  try {
+    const res = await fetch('/api/reminders/due');
+    const data = await res.json();
+    // Fire the first pending reminder; one at a time keeps the UI calm
+    const next = (data.due || [])[0];
+    if (next) {
+      showReminder(next);
+    } else if (currentReminder) {
+      // nothing due and we have one showing for a slot no longer in the window
+      hideReminder();
+    }
+    // Opportunistically trigger missed-med check so overdue doses page Priya
+    fetch('/api/missed_check', { method: 'POST' }).catch(() => {});
+  } catch (e) {
+    /* non-fatal; next tick retries */
+  }
+}
+
+checkReminders();
+setInterval(checkReminders, 30000);  // every 30s — good enough, low-noise
+
 // ─── Button fallback ───
 buttons.forEach(btn => {
   btn.addEventListener('click', (e) => {

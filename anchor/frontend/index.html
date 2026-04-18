@@ -18,6 +18,30 @@
       <div id="grain"></div>
     </div>
 
+    <!-- Daily brief — proactive morning card, always visible -->
+    <aside id="daily-brief" aria-label="What's happening today">
+      <div id="brief-greeting"></div>
+      <div id="brief-date"></div>
+      <div id="brief-next"></div>
+    </aside>
+
+    <!-- Top-right patient nav -->
+    <nav id="patient-nav">
+      <a href="/family" class="nav-link" aria-label="See your family">Your family</a>
+      <a href="/music"  class="nav-link" aria-label="Play some music">Music</a>
+    </nav>
+
+    <!-- Reminder card — appears when a scheduled task is due now -->
+    <div id="reminder-overlay" hidden>
+      <div id="reminder-card">
+        <div id="reminder-kind"></div>
+        <div id="reminder-label"></div>
+        <div id="reminder-detail"></div>
+        <button id="reminder-confirm">I've done it, love</button>
+        <button id="reminder-dismiss">Later</button>
+      </div>
+    </div>
+
     <!-- Breathing ring — the heart of the interface -->
     <div id="breathing-ring" aria-label="Anchor is here with you"></div>
 

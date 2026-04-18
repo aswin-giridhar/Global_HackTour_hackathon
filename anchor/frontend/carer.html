@@ -208,6 +208,141 @@
     .reconnecting .status-text {
       color: var(--terracotta);
     }
+
+    /* ─── Medication panel ─── */
+    .med-panel {
+      margin: 12px 16px 0;
+      padding: 14px 16px;
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+    }
+
+    .med-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--brown-soft);
+      margin-bottom: 10px;
+    }
+
+    .med-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+    }
+
+    .med-row + .med-row {
+      border-top: 1px solid rgba(212, 197, 176, 0.4);
+    }
+
+    .med-label {
+      font-size: 13px;
+      color: var(--brown-warm);
+      font-weight: 500;
+    }
+
+    .med-sub {
+      font-size: 11px;
+      color: var(--brown-soft);
+      margin-top: 2px;
+    }
+
+    .med-btn {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--amber);
+      background: var(--warm-white);
+      color: var(--brown-deep);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .med-btn:hover {
+      background: var(--amber);
+      color: white;
+    }
+
+    .med-btn.done {
+      background: rgba(142, 168, 118, 0.14);
+      color: var(--sage);
+      border-color: rgba(142, 168, 118, 0.4);
+      cursor: default;
+    }
+
+    /* Carer nav strip */
+    .carer-nav {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 0;
+      flex-wrap: wrap;
+    }
+    .carer-nav a, .carer-nav button {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--stone);
+      background: var(--warm-white);
+      color: var(--brown-warm);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .carer-nav a:hover, .carer-nav button:hover { border-color: var(--amber); }
+
+    /* Schedule editor */
+    .schedule-panel {
+      margin: 12px 16px 0;
+      padding: 14px 16px;
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+      display: none;
+    }
+    .schedule-panel.open { display: block; }
+    .schedule-row {
+      display: grid;
+      grid-template-columns: 1fr 110px;
+      gap: 10px;
+      align-items: center;
+      padding: 6px 0;
+    }
+    .schedule-row + .schedule-row {
+      border-top: 1px solid rgba(212,197,176,0.4);
+    }
+    .schedule-row label {
+      font-size: 13px;
+      color: var(--brown-warm);
+      font-weight: 500;
+    }
+    .schedule-row input {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--sand);
+      background: white;
+    }
+    .schedule-save {
+      margin-top: 10px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 100px;
+      border: none;
+      background: var(--amber);
+      color: white;
+      cursor: pointer;
+    }
+    .schedule-save:hover { background: var(--terracotta); }
   </style>
 </head>
 <body>
@@ -217,6 +352,41 @@
       <span class="status-text">Margaret is doing fine</span>
     </div>
     <span class="header-title">Priya's view</span>
+  </div>
+
+  <div class="carer-nav">
+    <a href="/logs">Health log</a>
+    <a href="/safety">Safety &amp; location</a>
+    <button id="toggle-schedule">Edit schedule</button>
+  </div>
+
+  <div class="schedule-panel" id="schedule-panel">
+    <div class="med-title">Edit Margaret's schedule</div>
+    <div class="schedule-row"><label>Morning medicine time</label><input type="time" id="sched-med-morning"></div>
+    <div class="schedule-row"><label>Evening medicine time</label><input type="time" id="sched-med-evening"></div>
+    <div class="schedule-row"><label>Morning tea</label><input type="time" id="sched-tea"></div>
+    <div class="schedule-row"><label>Lunch</label><input type="time" id="sched-lunch"></div>
+    <div class="schedule-row"><label>Dinner</label><input type="time" id="sched-dinner"></div>
+    <button class="schedule-save" id="schedule-save">Save schedule</button>
+    <span id="schedule-msg" style="margin-left:10px;font-size:11px;color:var(--sage);"></span>
+  </div>
+
+  <div class="med-panel" id="med-panel">
+    <div class="med-title">Today's medication</div>
+    <div class="med-row">
+      <div>
+        <div class="med-label" id="med-morning-label">Morning dose</div>
+        <div class="med-sub" id="med-morning-sub">—</div>
+      </div>
+      <button class="med-btn" id="med-morning-btn" data-slot="morning">Mark as taken</button>
+    </div>
+    <div class="med-row">
+      <div>
+        <div class="med-label" id="med-evening-label">Evening dose</div>
+        <div class="med-sub" id="med-evening-sub">—</div>
+      </div>
+      <button class="med-btn" id="med-evening-btn" data-slot="evening">Mark as taken</button>
+    </div>
   </div>
 
   <div id="notifications"></div>
@@ -293,6 +463,105 @@
         </div>
       `).join('');
     }
+
+    // ─── Medication panel ───
+    async function refreshMedStatus() {
+      try {
+        const res = await fetch('/api/medication/status');
+        const s = await res.json();
+        const m = s.morning_schedule || {};
+        const e = s.evening_schedule || {};
+        document.getElementById('med-morning-sub').textContent =
+          `${m.drug || 'Dose'} ${m.dose || ''} at ${m.time || ''}`.trim();
+        document.getElementById('med-evening-sub').textContent =
+          `${e.drug || 'Dose'} ${e.dose || ''} at ${e.time || ''}`.trim();
+        updateMedBtn('morning', s.morning_taken);
+        updateMedBtn('evening', s.evening_taken);
+      } catch (err) {
+        console.warn('[Carer] Medication status unavailable:', err);
+      }
+    }
+
+    function updateMedBtn(slot, taken) {
+      const btn = document.getElementById(`med-${slot}-btn`);
+      if (!btn) return;
+      if (taken) {
+        btn.textContent = '✓ Taken today';
+        btn.classList.add('done');
+        btn.disabled = true;
+      } else {
+        btn.textContent = 'Mark as taken';
+        btn.classList.remove('done');
+        btn.disabled = false;
+      }
+    }
+
+    document.querySelectorAll('.med-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const slot = btn.dataset.slot;
+        btn.disabled = true;
+        btn.textContent = '…';
+        try {
+          const res = await fetch('/api/medication/taken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slot, marked_by: 'carer' }),
+          });
+          if (!res.ok) throw new Error('Network error');
+          updateMedBtn(slot, true);
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Try again';
+          console.error('[Carer] Med mark error:', err);
+        }
+      });
+    });
+
+    refreshMedStatus();
+    setInterval(refreshMedStatus, 10000);
+
+    // ─── Schedule editor ───
+    const schedPanel = document.getElementById('schedule-panel');
+    document.getElementById('toggle-schedule').addEventListener('click', async () => {
+      schedPanel.classList.toggle('open');
+      if (schedPanel.classList.contains('open')) {
+        try {
+          const res = await fetch('/api/schedule');
+          const s = (await res.json()).routine || {};
+          document.getElementById('sched-med-morning').value = (s.medication_morning && s.medication_morning.time) || '';
+          document.getElementById('sched-med-evening').value = (s.medication_evening && s.medication_evening.time) || '';
+          document.getElementById('sched-tea').value    = s.tea    || '';
+          document.getElementById('sched-lunch').value  = s.lunch  || '';
+          document.getElementById('sched-dinner').value = s.dinner || '';
+        } catch (e) { console.warn('schedule load failed', e); }
+      }
+    });
+
+    document.getElementById('schedule-save').addEventListener('click', async () => {
+      const btn = document.getElementById('schedule-save');
+      const msg = document.getElementById('schedule-msg');
+      btn.disabled = true; msg.textContent = '';
+      const body = {
+        medication_morning_time: document.getElementById('sched-med-morning').value || null,
+        medication_evening_time: document.getElementById('sched-med-evening').value || null,
+        tea:    document.getElementById('sched-tea').value    || null,
+        lunch:  document.getElementById('sched-lunch').value  || null,
+        dinner: document.getElementById('sched-dinner').value || null,
+      };
+      try {
+        const res = await fetch('/api/schedule/update', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error();
+        msg.textContent = '✓ Saved';
+        refreshMedStatus();
+      } catch {
+        msg.textContent = 'Save failed';
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     setInterval(poll, 2000);
     poll();
