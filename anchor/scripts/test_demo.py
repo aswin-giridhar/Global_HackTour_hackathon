@@ -18,7 +18,8 @@ import time
 
 import requests
 
-BASE = "http://127.0.0.1:8000"
+import os
+BASE = os.environ.get("ANCHOR_URL", "http://127.0.0.1:8000")
 TIMEOUT = 60  # first call may pay the GLM timeout before Claude fallback engages
 
 # Phrases Anchor must never say. Matched case-insensitively as substrings.
