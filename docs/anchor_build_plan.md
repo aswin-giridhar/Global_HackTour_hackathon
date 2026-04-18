@@ -6,6 +6,68 @@ One-day hackathon build plan. Patient-facing Alzheimer's/dementia companion. Tra
 
 ---
 
+## 0A. Post-build reality (updated 2026-04-18, end of Saturday)
+
+This document was written as a planning artifact. During the Saturday build the team chose to widen scope beyond the original plan to cover a broader "Alzheimer's App" feature list. What actually shipped is broader than sections 0, 2, and 12 describe. Read those sections as the original *intent*; read this section as the *current state*.
+
+**Primary LLM routing changed.** GLM-4.5 is primary but the Z.AI account ran out of credit mid-build, so `backend/agent.py` now has a latched fallback to Claude `claude-sonnet-4-5` via the `anthropic` SDK, triggered by any `RateLimitError` / `AuthenticationError` / `APIStatusError` from the OpenAI client. SSL cert failures on macOS Python 3.14 also fall back to `verify=False` at request time rather than construction time.
+
+**Deployment.** Anchor is deployed on Render (Frankfurt, free plan) at `https://anchor-uguz.onrender.com` and auto-redeploys from `main`. `render.yaml` at repo root is the Blueprint. Auto-deploy works on push but has shown a lag — explicit `POST /v1/services/<id>/deploys` via the Render REST API is a reliable fallback during time-pressured iterations.
+
+**What now exists beyond the plan:**
+
+Patient-side additions (all on `/`):
+- Proactive reminder overlay that wakes ±15 min of scheduled medication / meal / water times, speaks the prompt via browser TTS, has a large "I've done it, love" confirm button.
+- Daily brief card at the top of the patient UI: greeting + day/date + next scheduled event.
+- Top-right nav to `/family` and `/music`.
+- Foreground GPS via `navigator.geolocation.watchPosition()` → `POST /api/location/update`.
+
+New patient-side pages:
+- `/family` — warm card grid with illustrated watercolour portraits (generated via Runware, commercial-use cleared), next-visit countdown ("In 3 days"), primary-carer corner ribbon, large `tel:` call buttons that act as real one-tap calls on mobile, and "Hear Priya's message" audio playback when a voice message is recorded.
+- `/music` — three ElevenLabs-composed tracks (gentle hymn / 1940s waltz / evening ambient), commercial-use cleared per ElevenLabs terms, matching Margaret's profile preferences.
+- `/safety` — live foreground GPS map: home dot, safe-zone ring, pulsing current position, dashed breach line when out of zone. "Set this device's current spot as home" auto-calibrates for the demo venue. Honest label about background-tracking limits.
+
+Carer-side additions — the plan's "no UI of her own" principle was reversed; see sections 0 and 12 caveats below. `/carer` now includes:
+- At-a-glance dashboard header: greeting + headline (urgent → gentle → pending → doing-well ladder) + four tone-coded metrics (morning dose / evening dose / last mood / alerts today).
+- Chronological **Today's activity** feed merging medications / reminder confirms / mood entries / alerts / conversation turns — polls every 5s.
+- Medication panel with latching "Mark as taken" buttons per slot.
+- Nav: Health log / Safety / Edit schedule / Family messages.
+- Collapsible schedule editor that writes medication + meal times back to `patient_profile.json`.
+- Family-messages manager: per-person photo upload (jpg/png/webp, 5MB cap) + voice recording via MediaRecorder (webm, 30s cap).
+- `/logs` — mood picker (good / settled / agitated / tearful), sleep-hours input, free-form notes, chronological history.
+
+New backend endpoints (all additive to what section 4 describes; none touch the `/api/speak` pipeline):
+
+```
+GET  /family, /music, /safety, /logs             # page routes
+GET  /api/family                                 # living family only (deceased filtered)
+GET  /api/family/photo   + POST/GET/DELETE /{name}   # photo uploads
+GET  /api/family/voice   + POST/GET/DELETE /{name}   # voice message uploads
+GET  /api/daily_brief                            # day, date, part_of_day, next_event
+GET  /api/medication/status                      # per-slot + schedule metadata
+POST /api/medication/taken                       # logs to data/medication_log.json
+GET  /api/reminders/due                          # ±15min window, skips confirmed
+POST /api/reminders/confirm                      # routes meds to med-log, others to reminder_confirmations
+POST /api/missed_check                           # idempotent per dose per day
+GET  /api/dashboard/summary                      # at-a-glance numbers
+GET  /api/activity/today                         # unified chronological feed
+POST /api/log/behavior   + GET                   # mood/sleep/notes
+GET  /api/schedule       + POST /api/schedule/update
+GET  /api/music/tracks                           # ElevenLabs-composed track list
+POST /api/safety/simulate_wandering              # demo-only escalation trigger
+POST /api/location/update                        # patient device posts lat/lng
+POST /api/location/set_home                      # carer sets geofence centre
+GET  /api/location/latest                        # carer map polls this
+```
+
+**Test harness.** `scripts/test_demo.py` is a 43-check behavioural suite covering the 4 demo-script scenes plus 6 additional safety probes. Honors `ANCHOR_URL=<url>` for running against localhost or Render. Confirmed 41/43 against production (2 failures on one identity-question scene — LLM flakiness, not a deploy regression).
+
+**What still aligns with the plan as written.** The core `/api/speak` pipeline — memory block build → GLM call → escalation detection → rule-based `verify_grounded()` → LLM critic (Concept 11) → profile-gap logging (Concept 12) → `classify_urgency` gentle/high (Concept 10) — is unchanged. All four recommended research concepts from `anchor_concepts.md` are in. Both recommended skips (Concept 7 MetaForge, Concept 9 Evolvr) stayed skipped.
+
+**Demo guidance that changed because of the scope expansion.** The 4-scene conversational demo (section 6 below) remains the right spine for the 5-minute pitch. The new carer-side features should be held back for Q&A unless the judge asks about wandering, medication, or activity monitoring — the pitch story is still grounded-memory + silent-escalation, not a care dashboard. Leading with the dashboard in 5 minutes dilutes the peer-vote angle.
+
+---
+
 ## 0. Context for the coding agent
 
 - **Build window:** ~12 focused hours, 4-person team.
@@ -13,6 +75,7 @@ One-day hackathon build plan. Patient-facing Alzheimer's/dementia companion. Tra
 - **Secondary user:** the carer ("Priya") — silent, notified in the background, no UI of her own.
 - **Core promise:** Anchor answers Margaret's questions from grounded memory only, with warmth, without ever reminding her she forgot, without correcting painful truths, and without giving medical advice. When Margaret is distressed, a silent notification goes to Priya.
 - **Non-goals for this build:** carer dashboard, login system, multi-user, mobile app, settings screen, analytics, training UI, onboarding flow. All out of scope. The app is on, warm, and ready.
+  > **Post-build note (2026-04-18):** The team chose to build a full carer dashboard plus several other items on this non-goals list during Saturday evening. See section 0A for the actual shipped scope. Login/auth, multi-user, native mobile app, onboarding flow, and analytics remain genuinely out of scope.
 
 **The one-sentence rule:** *Every feature measured against "does this help Margaret keep being herself?"* If not, cut it.
 
@@ -30,12 +93,16 @@ Fixed choices so the agent doesn't waste hours re-deciding:
 |-------|--------|-----|
 | Frontend | Vanilla HTML + vanilla JS + CSS | Zero build step, loads instantly, no framework drama. If frontend dev exists on team, React is fine but not required. |
 | Backend | Python FastAPI | Async-friendly, one-file server, Mem0 SDK is Python. |
-| LLM | Z.AI GLM-4.5 via OpenAI-compatible API (free credits from hackathon) — fallback to Claude Sonnet 4.6 via Anthropic API if credits insufficient | Free, hackathon-sanctioned. |
+| LLM | **Shipped:** Z.AI GLM-4.5 primary → auto-fallback to Claude `claude-sonnet-4-5` via `anthropic` SDK, latched per process on `RateLimitError` / `AuthenticationError` / `APIStatusError`. Triggered automatically once the Z.AI credit was exhausted mid-build. | Survives GLM outage / wallet-empty without manual intervention. One `[FALLBACK]` log line on first affected call. |
 | Memory | Mem0 Python SDK (free tier, 1000 memories) | Fastest to integrate. Alternative: plain JSON file + simple retrieval function if Mem0 API causes friction. |
 | Speech-to-text | Browser Web Speech API (`SpeechRecognition`) | Zero setup, free, works offline in Chrome. No network dependency. |
-| Text-to-speech | ElevenLabs API (paid, warm voice) with browser `SpeechSynthesis` fallback | Voice quality makes or breaks the demo. Budget ~£5 in credits. |
+| Text-to-speech | **Shipped:** Browser `SpeechSynthesis` (reliable, zero-cost). ElevenLabs TTS is wired in `backend/voice.py` but the voice-id is a placeholder; falls through to browser TTS. | Voice quality is good enough for demo; production would set a real voice-id. |
+| Music | **Shipped — new:** ElevenLabs Music API (POST `/v1/music`). Three 45-second tracks (hymn / wartime waltz / evening ambient) generated during the build and committed to `anchor/frontend/assets/music/`. Commercial-use cleared per ElevenLabs terms. | Closes the "familiar music" spec item with licensed audio rather than synth tones. |
+| Family portraits | **Shipped — new:** Runware (SDXL) for default watercolour-style illustrations at `anchor/frontend/assets/family/`. Carer can upload real photos via `/carer` Family-messages panel to override. | Avoids photorealistic fakes labelled with real relatives' names (clinical-ethics concern); warmer than monograms. |
+| Family voice messages | **Shipped — new:** Browser `MediaRecorder` on `/carer`, 30s cap, uploaded via `POST /api/family/voice/{name}`, played from `/family`. | Closes the "family voice recordings for reassurance" spec item. |
+| GPS + geofencing | **Shipped — new:** Foreground `navigator.geolocation.watchPosition()` → server-side Haversine distance → idempotent-per-breach escalation. | Real wandering-alert chain; background tracking still needs a native app. |
 | Calendar/notification | Mock file-based webhook written to `data/carer_notifications.json` — display on second screen via a simple `/carer` HTML page that polls the file | Demo-friendly, no OAuth pain. |
-| Hosting | localhost (FastAPI `uvicorn`) served over the hackathon Wi-Fi to a second device showing the carer screen | Simpler than deployment. |
+| Hosting | **Shipped:** Render (Frankfurt, free plan, auto-deploy from `main` via `render.yaml`) at `https://anchor-uguz.onrender.com`. Localhost still works as a fallback. | Demo-friendly URL for teammate testing; free plan spin-down adds ~30s cold-start penalty. |
 | Package manager | `uv` (fast Python pip replacement) | Avoids pip wait times. |
 
 **Do not use:** React, Next.js, WebSockets, Docker, Postgres, Redis, Celery, Kubernetes. Anything requiring more than 5 minutes of setup is banned.
@@ -44,36 +111,91 @@ Fixed choices so the agent doesn't waste hours re-deciding:
 
 ## 2. File structure
 
+> **Shipped layout (2026-04-18).** The original plan is preserved below the dashed line as historical intent.
+
+```
+.
+├── render.yaml                           # Render Blueprint (rootDir: anchor)
+└── anchor/
+    ├── README.md
+    ├── pyproject.toml                    # uv-managed deps (includes anthropic, python-multipart)
+    ├── requirements.txt                  # pip-compatible deps, used by Render build
+    ├── uv.lock
+    ├── .env                              # API keys (never committed)
+    ├── .env.example
+    ├── backend/
+    │   ├── main.py                       # FastAPI app, all routes — now includes dashboard,
+    │   │                                 # activity feed, reminders, medication, family photo/voice,
+    │   │                                 # schedule editor, music, safety/GPS, mood log
+    │   ├── agent.py                      # GLM + Claude-fallback, SSL fallback, two-layer safety rail
+    │   ├── memory.py                     # JSON-backed memory + Concept 12 profile-gap logging
+    │   ├── escalation.py                 # Carer notification + Concept 10 urgency classification
+    │   ├── voice.py                      # ElevenLabs TTS with browser-fallback path
+    │   └── patient_profile.json          # Seeded Margaret profile
+    ├── frontend/
+    │   ├── index.html                    # Patient UI — ring + cushion buttons + daily brief + nav + reminder overlay
+    │   ├── carer.html                    # Carer UI — dashboard / alerts / activity feed / medication / schedule / family
+    │   ├── family.html                   # Family page — watercolour tiles / next-visit countdown / call + voice
+    │   ├── music.html                    # Music player — three ElevenLabs tracks
+    │   ├── safety.html                   # Live GPS map + geofence + simulate-breach
+    │   ├── logs.html                     # Mood/sleep/notes log for carer
+    │   ├── styles.css                    # Living Room Lamplight + all added component styles
+    │   ├── patient.js                    # Voice capture, reminders, daily brief, geolocation
+    │   └── assets/
+    │       ├── ack.wav, chime.wav        # Generated UI sounds
+    │       ├── family/{priya,david,james}.jpg    # Runware watercolour portraits
+    │       └── music/{gentle_hymn,dance_memory,evening_calm}.mp3    # ElevenLabs Music tracks
+    ├── data/                              # Gitignored — runtime state (ephemeral on Render free plan)
+    │   ├── carer_notifications.json
+    │   ├── conversation_log.json
+    │   ├── profile_update_suggestions.json     # Concept 12 BrowseBack-lite
+    │   ├── medication_log.json
+    │   ├── behavior_log.json
+    │   ├── reminder_confirmations.json
+    │   ├── missed_med_fired.json
+    │   ├── location.json                       # GPS state (home, latest, history)
+    │   ├── family_photos/                      # Uploaded photos (override watercolours)
+    │   └── family_voices/                      # Carer-recorded reassurance messages
+    ├── demo/
+    │   └── demo_script.md                # The 4 scenes to rehearse
+    └── scripts/
+        ├── seed_memory.py                # Ensures data/ files exist
+        ├── reset.py                      # Wipes all runtime state for a clean demo
+        └── test_demo.py                  # 43-check behavioural harness; honors ANCHOR_URL env var
+```
+
+---
+
+*Original planned layout (kept for reference):*
+
 ```
 anchor/
 ├── README.md
-├── pyproject.toml               # uv-managed deps
-├── .env                         # API keys (never committed)
+├── pyproject.toml
+├── .env
 ├── .env.example
 ├── backend/
-│   ├── main.py                  # FastAPI app, all routes
-│   ├── agent.py                 # LLM call, prompt assembly, safety rail
-│   ├── memory.py                # Mem0 wrapper OR JSON-backed memory
-│   ├── escalation.py            # Carer notification logic
-│   ├── voice.py                 # ElevenLabs TTS helper
-│   └── patient_profile.json     # Seeded Margaret profile
+│   ├── main.py
+│   ├── agent.py
+│   ├── memory.py
+│   ├── escalation.py
+│   ├── voice.py
+│   └── patient_profile.json
 ├── frontend/
-│   ├── index.html               # Patient interface
-│   ├── carer.html               # Carer notification view (second screen)
+│   ├── index.html
+│   ├── carer.html
 │   ├── styles.css
-│   ├── patient.js               # Voice capture, button fallbacks, render
+│   ├── patient.js
 │   └── assets/
-│       ├── resting_image.jpg    # Warm kitchen/garden scene
-│       └── pulse.svg            # Listening indicator
 ├── data/
-│   ├── carer_notifications.json # Escalation log (written by backend, read by carer page)
-│   └── conversation_log.json    # Episodic memory
+│   ├── carer_notifications.json
+│   └── conversation_log.json
 ├── demo/
-│   ├── demo_script.md           # The 4 scenes to rehearse
-│   └── pregenerated_audio/      # Pre-rendered TTS clips for stage backup
+│   ├── demo_script.md
+│   └── pregenerated_audio/
 └── scripts/
-    ├── seed_memory.py           # Loads patient_profile.json into Mem0
-    └── reset.py                 # Wipes memory + notifications for a clean demo
+    ├── seed_memory.py
+    └── reset.py
 ```
 
 ---
@@ -969,9 +1091,11 @@ Margaret signals fear. Anchor reassures AND silently notifies Priya (carer scree
 
 ```
 GLM_API_KEY=your-zai-glm-key
-ELEVENLABS_API_KEY=your-elevenlabs-key
-ANTHROPIC_API_KEY=optional-fallback
+ELEVENLABS_API_KEY=your-elevenlabs-key   # also unlocks Eleven Music API
+ANTHROPIC_API_KEY=sk-ant-api03-...       # NOT optional any more — primary fallback when GLM is out of credit
 ```
+
+> **Post-build note.** `ANTHROPIC_API_KEY` was framed as "optional-fallback" in the original plan. In practice the Z.AI credit expired mid-build, so the Claude path is now on the active hot path for every `/api/speak` call. Treat Anthropic as mandatory. Render needs the key too; set it in the service's environment variables, not in the committed `render.yaml`. Rotate whenever it appears in chat or logs.
 
 ## 9. Setup commands for the coding agent
 
@@ -990,6 +1114,8 @@ uv run uvicorn backend.main:app --reload --port 8000
 # Reset between demos
 curl -X POST http://localhost:8000/api/reset
 ```
+
+> **Post-build note — actual setup commands used.** `mem0ai` was never used (JSON retrieval kept). The live dep set is `fastapi uvicorn[standard] openai anthropic httpx certifi python-dotenv requests pydantic python-multipart`, captured in both `pyproject.toml` and `requirements.txt`. Run the behavioural test suite with `ANCHOR_URL=<url> uv run python scripts/test_demo.py`. Render deploy is driven by `render.yaml` at the repo root; explicit redeploy: `POST https://api.render.com/v1/services/<id>/deploys` with a Render API key.
 
 ---
 
@@ -1170,23 +1296,33 @@ If you're worried about cost, set a hard spending cap on ElevenLabs' dashboard b
 
 ## 12. What NOT to build
 
+> **Post-build note (2026-04-18):** Several items on the original list were built anyway during Saturday's scope-expansion push against the "Alzheimer's App" feature spec. Strikethroughs mark items that were actually built. Other items remain legitimately out of scope.
+
 Written down so the coding agent doesn't drift:
 
-- Login / auth / user management
-- Carer dashboard as a separate app (the `carer.html` notification view is the entire carer UI)
-- Medication tracking form (read-only from profile is enough)
-- Analytics / logging beyond `conversation_log.json`
-- Mobile app wrapper
-- Onboarding flow / first-time setup
-- Settings page / preferences UI
-- Dark mode toggle
+- Login / auth / user management *(still not built; `/carer` is open to anyone with the URL)*
+- ~~Carer dashboard as a separate app~~ **— built anyway.** `/carer` now has an at-a-glance dashboard header, activity feed, medication panel, schedule editor, health log page, safety map, family messages manager. See section 0A. The pitch should still treat the carer as secondary; don't lead with her UI.
+- ~~Medication tracking form~~ **— built.** Active confirmation + missed-dose auto-alert + editable schedule, not just read-only.
+- Analytics / logging beyond `conversation_log.json` *(still not built; we have activity aggregation but no analytics)*
+- Mobile app wrapper *(still not built; app is a web page, `tel:` and Geolocation make it phone-capable)*
+- Onboarding flow / first-time setup *(still not built — device is pre-configured)*
+- Settings page / preferences UI *(partial — schedule editor on carer side edits routine times; no general settings page)*
+- Dark mode toggle *(still not built)*
 - Multi-language (demo is English, state this in the pitch)
-- Real Google Calendar integration (mock is fine)
-- Real SMS to carer (mock is fine)
-- HIPAA/GDPR compliance work (acknowledge in pitch that production would need it)
+- Real Google Calendar integration (mock is fine — still only the file-based carer notifications)
+- Real SMS / phone call infra *(still not built; `tel:` links open the native dialer but there is no Twilio)*
+- HIPAA / UK GDPR compliance work (acknowledge in pitch that production would need it)
 - Fine-tuning or training any model
 - Voice cloning
 - Face recognition / presence detection
+
+Newly added items that were **not** on the original plan but shipped on Saturday:
+- Live foreground GPS tracking + geofencing (real, via `navigator.geolocation`)
+- Family photo manager (upload or fall-back to watercolour illustrations generated via Runware)
+- Family voice-message recording (MediaRecorder, uploaded from carer side)
+- Commercial-licensed music tracks (ElevenLabs Music API)
+- Proactive voice-spoken reminders for medication, meals, water
+- Mood / sleep / behaviour log
 
 ---
 
