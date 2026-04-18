@@ -51,6 +51,22 @@ const KIND_TITLES = {
 let currentReminder = null;
 let dismissedThisSession = new Set();  // slot → dismissed until refresh
 
+function speakReminder(r) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const phrases = {
+    medication: `It's time for your medicine, love. ${r.label}.`,
+    meal:       `It's time for ${r.label.toLowerCase()}, love.`,
+    water:      `A little drink of water when you're ready, love.`,
+  };
+  const text = phrases[r.kind] || `Gentle reminder, love — ${r.label}.`;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  u.rate = 0.92;
+  u.pitch = 1.05;
+  speechSynthesis.speak(u);
+}
+
 function showReminder(r) {
   if (dismissedThisSession.has(r.slot)) return;
   if (currentReminder && currentReminder.slot === r.slot) return;
@@ -59,6 +75,7 @@ function showReminder(r) {
   reminderLabel.textContent = r.label;
   reminderDetail.textContent = r.detail || `Scheduled ${r.time}`;
   reminderOverlay.hidden = false;
+  speakReminder(r);
 }
 
 function hideReminder() {

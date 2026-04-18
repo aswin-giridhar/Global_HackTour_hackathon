@@ -343,6 +343,139 @@
       cursor: pointer;
     }
     .schedule-save:hover { background: var(--terracotta); }
+
+    /* ─── Dashboard summary (at-a-glance) ─── */
+    .dashboard {
+      margin: 12px 16px 0;
+      padding: 16px 18px;
+      background: linear-gradient(135deg, var(--warm-white), var(--cream));
+      border: 1px solid var(--sand);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px var(--shadow-warm);
+    }
+
+    .dash-greeting {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 17px;
+      color: var(--brown-soft);
+      margin-bottom: 4px;
+    }
+
+    .dash-headline {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      line-height: 1.25;
+      margin-bottom: 14px;
+    }
+
+    .dash-headline.urgent { color: var(--terracotta); }
+
+    .dash-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .dash-metric {
+      background: var(--warm-white);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--stone);
+    }
+
+    .dash-metric-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--brown-soft);
+      margin-bottom: 4px;
+    }
+
+    .dash-metric-value {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--brown-deep);
+    }
+
+    .dash-metric.good .dash-metric-value   { color: var(--sage); }
+    .dash-metric.alert .dash-metric-value  { color: var(--terracotta); }
+    .dash-metric.pending .dash-metric-value{ color: var(--amber); }
+
+    /* ─── Section divider ─── */
+    .section-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      padding: 20px 20px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .section-sub {
+      font-size: 11px;
+      color: var(--brown-soft);
+      font-family: var(--font-ui);
+      font-style: normal;
+    }
+
+    /* ─── Activity feed ─── */
+    .activity-feed {
+      padding: 0 16px 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--stone);
+    }
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--sand);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .activity-item.medication_taken .activity-dot { background: var(--sage); }
+    .activity-item.behavior_log     .activity-dot { background: var(--amber); }
+    .activity-item.alert_high       .activity-dot { background: var(--terracotta); }
+    .activity-item.alert_gentle     .activity-dot { background: var(--amber); }
+    .activity-item.conversation     .activity-dot { background: var(--sand); }
+
+    .activity-body { flex: 1; min-width: 0; }
+    .activity-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--brown-deep);
+    }
+    .activity-meta {
+      font-size: 12px;
+      color: var(--brown-soft);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .activity-time {
+      font-size: 11px;
+      color: var(--sand);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .activity-empty {
+      text-align: center;
+      padding: 24px 16px;
+      color: var(--brown-soft);
+      font-style: italic;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -352,6 +485,29 @@
       <span class="status-text">Margaret is doing fine</span>
     </div>
     <span class="header-title">Priya's view</span>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="dash-greeting" id="dash-greeting">Hello, Priya</div>
+    <div class="dash-headline" id="dash-headline">Loading Margaret's day…</div>
+    <div class="dash-metrics">
+      <div class="dash-metric" id="m-morning">
+        <div class="dash-metric-label">Morning dose</div>
+        <div class="dash-metric-value">—</div>
+      </div>
+      <div class="dash-metric" id="m-evening">
+        <div class="dash-metric-label">Evening dose</div>
+        <div class="dash-metric-value">—</div>
+      </div>
+      <div class="dash-metric" id="m-mood">
+        <div class="dash-metric-label">Last mood</div>
+        <div class="dash-metric-value">—</div>
+      </div>
+      <div class="dash-metric" id="m-alerts">
+        <div class="dash-metric-label">Alerts today</div>
+        <div class="dash-metric-value">—</div>
+      </div>
+    </div>
   </div>
 
   <div class="carer-nav">
@@ -389,12 +545,24 @@
     </div>
   </div>
 
+  <div class="section-title">
+    <span>Alerts</span>
+    <span class="section-sub">live</span>
+  </div>
   <div id="notifications"></div>
 
   <div id="empty-state">
     <div class="empty-icon">🏠</div>
-    <div class="empty-text">No notifications yet.</div>
+    <div class="empty-text">No alerts right now.</div>
     <div class="empty-sub">Margaret is resting quietly.</div>
+  </div>
+
+  <div class="section-title">
+    <span>Today's activity</span>
+    <span class="section-sub">chronological</span>
+  </div>
+  <div class="activity-feed" id="activity-feed">
+    <div class="activity-empty">Quiet so far today.</div>
   </div>
 
   <audio id="chime" src="/static/assets/chime.wav"></audio>
@@ -519,6 +687,83 @@
 
     refreshMedStatus();
     setInterval(refreshMedStatus, 10000);
+
+    // ─── Dashboard summary ───
+    async function refreshDashboard() {
+      try {
+        const res = await fetch('/api/dashboard/summary');
+        const s = await res.json();
+        const hr = new Date().getHours();
+        const greet = hr < 12 ? 'Good morning, Priya' : hr < 17 ? 'Good afternoon, Priya' : 'Good evening, Priya';
+        document.getElementById('dash-greeting').textContent = greet;
+
+        let headline, urgent = false;
+        if (s.alerts_today_high > 0) {
+          headline = `${s.alerts_today_high} urgent alert${s.alerts_today_high > 1 ? 's' : ''} today — check in when you can`;
+          urgent = true;
+        } else if (s.alerts_today_gentle > 0) {
+          headline = `${s.alerts_today_gentle} gentle check-in${s.alerts_today_gentle > 1 ? 's' : ''} today`;
+        } else if (!s.medication_morning_taken) {
+          headline = `Morning medication is still pending.`;
+        } else {
+          headline = `Margaret is doing well today.`;
+        }
+        const h = document.getElementById('dash-headline');
+        h.textContent = headline;
+        h.classList.toggle('urgent', urgent);
+
+        setMetric('m-morning', s.medication_morning_taken ? '✓ Taken' : 'Not yet', s.medication_morning_taken ? 'good' : 'pending');
+        setMetric('m-evening', s.medication_evening_taken ? '✓ Taken' : 'Not yet', s.medication_evening_taken ? 'good' : 'pending');
+        setMetric('m-mood', s.last_mood ? capitalize(s.last_mood) : 'Not logged', s.last_mood === 'agitated' || s.last_mood === 'tearful' ? 'alert' : s.last_mood ? 'good' : '');
+        const totalAlerts = (s.alerts_today_high || 0) + (s.alerts_today_gentle || 0);
+        setMetric('m-alerts', String(totalAlerts), s.alerts_today_high > 0 ? 'alert' : totalAlerts > 0 ? 'pending' : 'good');
+      } catch (e) { console.warn('dashboard load', e); }
+    }
+
+    function setMetric(id, value, tone) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.querySelector('.dash-metric-value').textContent = value;
+      el.classList.remove('good', 'alert', 'pending');
+      if (tone) el.classList.add(tone);
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // ─── Activity feed ───
+    async function refreshActivity() {
+      try {
+        const res = await fetch('/api/activity/today');
+        const data = await res.json();
+        const feed = document.getElementById('activity-feed');
+        if (!data.items || !data.items.length) {
+          feed.innerHTML = '<div class="activity-empty">Quiet so far today.</div>';
+          return;
+        }
+        feed.innerHTML = data.items.slice().reverse().map(i => {
+          const t = new Date(i.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+          const meta = i.meta ? `<div class="activity-meta">${escapeHtml(i.meta)}</div>` : '';
+          return `
+            <div class="activity-item ${i.kind}">
+              <div class="activity-dot"></div>
+              <div class="activity-body">
+                <div class="activity-label">${escapeHtml(i.label)}</div>
+                ${meta}
+              </div>
+              <div class="activity-time">${t}</div>
+            </div>`;
+        }).join('');
+      } catch (e) { console.warn('activity load', e); }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    refreshDashboard();
+    refreshActivity();
+    setInterval(refreshDashboard, 5000);
+    setInterval(refreshActivity,  5000);
 
     // ─── Schedule editor ───
     const schedPanel = document.getElementById('schedule-panel');

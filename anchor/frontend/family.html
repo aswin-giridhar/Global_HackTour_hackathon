@@ -14,7 +14,7 @@
 
     .family-page {
       min-height: 100vh;
-      padding: 48px 32px 64px;
+      padding: 56px 32px 72px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,10 +22,10 @@
 
     .family-title {
       font-family: var(--font-display);
-      font-size: clamp(40px, 5vw, 56px);
+      font-size: clamp(44px, 5.5vw, 60px);
       font-weight: 500;
       color: var(--brown-deep);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-align: center;
     }
 
@@ -34,15 +34,28 @@
       font-style: italic;
       font-size: 24px;
       color: var(--brown-soft);
-      margin-bottom: 48px;
+      margin-bottom: 12px;
       text-align: center;
     }
 
+    .family-next {
+      margin-bottom: 40px;
+      padding: 14px 24px;
+      background: var(--warm-white);
+      border: 1px solid var(--sand);
+      border-radius: 100px;
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--brown-warm);
+      box-shadow: 0 2px 10px var(--shadow-warm);
+    }
+    .family-next strong { color: var(--brown-deep); font-weight: 500; }
+
     .family-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
       gap: 32px;
-      max-width: 1100px;
+      max-width: 1200px;
       width: 100%;
       justify-content: center;
     }
@@ -50,13 +63,102 @@
     .family-card {
       background: var(--warm-white);
       border: 1px solid var(--sand);
-      border-radius: 24px;
-      padding: 32px 24px;
+      border-radius: 28px;
+      padding: 36px 28px 28px;
       text-align: center;
-      box-shadow: 0 4px 20px var(--shadow-warm);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 6px 24px var(--shadow-warm);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .family-card.primary {
+      border-color: var(--amber);
+      box-shadow: 0 8px 30px rgba(212, 165, 116, 0.2);
+    }
+
+    .family-card.primary::before {
+      content: 'Primary carer';
+      position: absolute;
+      top: 18px;
+      right: -40px;
+      transform: rotate(34deg);
+      background: var(--amber);
+      color: white;
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 40px;
+    }
+
+    .family-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(212, 165, 116, 0.28);
+    }
+
+    /* Illustrated portrait — soft abstract face */
+    .portrait {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+
+    .portrait svg { width: 100%; height: 100%; display: block; }
+
+    .family-name {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin-bottom: 2px;
+      line-height: 1.1;
+    }
+
+    .family-relation {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--brown-soft);
+      margin-bottom: 18px;
+    }
+
+    .family-meta-list {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--brown-warm);
+      line-height: 1.55;
+      margin-bottom: 22px;
+      min-height: 1em;
+    }
+
+    .family-meta-list .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(212, 197, 176, 0.3);
+    }
+    .family-meta-list .row:last-child { border-bottom: none; }
+    .family-meta-list .row span:first-child {
+      color: var(--brown-soft);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+    }
+    .family-meta-list .row span:last-child {
+      color: var(--brown-deep);
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .family-meta-list .row .countdown {
+      color: var(--sage);
+      font-weight: 600;
     }
 
     .call-btn {
@@ -64,95 +166,28 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      margin: 20px auto 0;
-      padding: 14px 28px;
+      margin-top: auto;
+      padding: 16px 32px;
       border-radius: 100px;
       background: var(--sage);
       color: white;
       text-decoration: none;
       font-family: var(--font-ui);
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 600;
       letter-spacing: 0.01em;
-      box-shadow: 0 4px 14px rgba(142, 168, 118, 0.35);
-      transition: all 0.2s ease;
-      min-width: 180px;
-      min-height: 54px;
+      box-shadow: 0 5px 18px rgba(142, 168, 118, 0.4);
+      transition: all 0.25s ease;
+      min-height: 58px;
     }
 
     .call-btn:hover {
       background: var(--sage-light);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(142, 168, 118, 0.45);
-    }
-
-    .call-btn .phone-icon { font-size: 20px; }
-
-    .family-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(212, 165, 116, 0.2);
+      box-shadow: 0 8px 24px rgba(142, 168, 118, 0.5);
     }
 
-    .avatar {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-size: 54px;
-      font-weight: 500;
-      color: var(--brown-deep);
-      background: radial-gradient(circle at 30% 30%, var(--cream), var(--stone));
-      border: 2px solid var(--sand);
-      box-shadow: inset 0 0 24px rgba(212, 165, 116, 0.2);
-    }
-
-    .family-card:nth-child(3n+1) .avatar { background: radial-gradient(circle at 30% 30%, #FBF1DE, var(--stone)); }
-    .family-card:nth-child(3n+2) .avatar { background: radial-gradient(circle at 30% 30%, #F4E4CC, var(--sand)); }
-    .family-card:nth-child(3n+3) .avatar { background: radial-gradient(circle at 30% 30%, #EFE4D2, #D8C8A8); }
-
-    .family-name {
-      font-family: var(--font-display);
-      font-size: 36px;
-      font-weight: 500;
-      color: var(--brown-deep);
-      margin-bottom: 4px;
-    }
-
-    .family-relation {
-      font-family: var(--font-display);
-      font-style: italic;
-      font-size: 20px;
-      color: var(--brown-soft);
-      margin-bottom: 16px;
-    }
-
-    .family-role {
-      display: inline-block;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 3px 10px;
-      border-radius: 100px;
-      background: rgba(142, 168, 118, 0.14);
-      color: var(--sage);
-      margin-bottom: 14px;
-    }
-
-    .family-meta {
-      font-family: var(--font-ui);
-      font-size: 14px;
-      color: var(--brown-warm);
-      line-height: 1.5;
-      margin-top: 8px;
-    }
-
-    .family-meta strong { color: var(--brown-deep); }
+    .call-btn .phone-icon { font-size: 22px; }
 
     .back-link {
       display: inline-flex;
@@ -163,13 +198,12 @@
       color: var(--brown-warm);
       text-decoration: none;
       margin-top: 48px;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 100px;
       border: 1px solid var(--sand);
       background: var(--warm-white);
       transition: all 0.25s ease;
     }
-
     .back-link:hover {
       border-color: var(--amber);
       transform: translateY(-1px);
@@ -181,53 +215,130 @@
   <div class="family-page">
     <h1 class="family-title">Your family</h1>
     <p class="family-subtitle">The people who love you most</p>
+    <div class="family-next" id="family-next" hidden></div>
     <div class="family-grid" id="family-grid"></div>
     <a href="/" class="back-link">&larr; Back to Anchor</a>
   </div>
 
   <script>
+    const PROTOTYPE_NUMBERS = {
+      Priya: '+441612345678',
+      David: '+441132987654',
+      James: '+441612345679',
+    };
+
+    // Warm illustrated portraits — abstract, not photographic
+    const PORTRAIT_PALETTES = {
+      Priya: { bg: '#EAD7BF', skin: '#E5C8A5', hair: '#5C4033', blouse: '#A8C494' },
+      David: { bg: '#E3D4BA', skin: '#E0BE99', hair: '#3D2B1F', blouse: '#8EA876' },
+      James: { bg: '#F4E4CC', skin: '#F2D4B4', hair: '#8B5A2B', blouse: '#D4A574' },
+    };
+
+    function portraitSvg(name) {
+      const p = PORTRAIT_PALETTES[name] || {bg:'#E8DDD0', skin:'#E5C8A5', hair:'#5C4033', blouse:'#A8C494'};
+      return `
+        <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- warm background circle -->
+          <circle cx="80" cy="80" r="76" fill="${p.bg}"/>
+          <circle cx="80" cy="80" r="76" fill="none" stroke="rgba(61,43,31,0.08)" stroke-width="1"/>
+          <!-- soft shoulders -->
+          <path d="M 16 160 Q 80 110 144 160 Z" fill="${p.blouse}"/>
+          <!-- neck -->
+          <rect x="68" y="96" width="24" height="20" fill="${p.skin}" rx="6"/>
+          <!-- head -->
+          <ellipse cx="80" cy="72" rx="32" ry="36" fill="${p.skin}"/>
+          <!-- hair -->
+          <path d="M 48 60 Q 48 30 80 28 Q 112 30 112 60 Q 112 52 110 50 Q 96 44 80 44 Q 64 44 50 50 Q 48 52 48 60 Z" fill="${p.hair}"/>
+          <!-- soft cheek blush -->
+          <circle cx="64" cy="82" r="5" fill="rgba(196,122,84,0.25)"/>
+          <circle cx="96" cy="82" r="5" fill="rgba(196,122,84,0.25)"/>
+          <!-- eyes (gentle closed-ish arcs) -->
+          <path d="M 62 74 Q 66 72 70 74" stroke="${p.hair}" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 90 74 Q 94 72 98 74" stroke="${p.hair}" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- smile -->
+          <path d="M 70 88 Q 80 94 90 88" stroke="rgba(61,43,31,0.6)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    // Parse "Thursdays 3pm" to next occurrence, return a warm countdown string
+    const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    function nextVisitFromPattern(pattern) {
+      if (!pattern) return null;
+      const m = pattern.toLowerCase().match(/(sun|mon|tues|wednes|thurs|fri|satur)days?/);
+      if (!m) return null;
+      const dayName = m[1].startsWith('tues')   ? 'tuesday'
+                   : m[1].startsWith('wednes') ? 'wednesday'
+                   : m[1].startsWith('thurs')  ? 'thursday'
+                   : m[1].startsWith('satur')  ? 'saturday'
+                   : m[1] + 'day';
+      const target = DAYS.indexOf(dayName);
+      const today = new Date();
+      const now = today.getDay();
+      let days = (target - now + 7) % 7;
+      if (days === 0) days = 7;
+      if (days === 1) return 'Tomorrow';
+      if (days === 0) return 'Today';
+      return `In ${days} days`;
+    }
+
     async function loadFamily() {
       const res = await fetch('/api/family');
       const data = await res.json();
       const grid = document.getElementById('family-grid');
-      // Mock phone numbers for the prototype — real deployment reads from profile
-      const PROTOTYPE_NUMBERS = {
-        Priya: '+441612345678',
-        David: '+441132987654',
-        James: '+441612345679',
-      };
-      grid.innerHTML = data.family.map(member => {
-        const initial = member.name.charAt(0).toUpperCase();
+
+      // Sort: primary carer first, then daughters/sons, then grandchildren
+      const order = { 'primary carer': 0, daughter: 1, son: 1, grandson: 2, granddaughter: 2 };
+      const sorted = data.family.slice().sort((a, b) =>
+        (order[a.role] ?? order[a.relation] ?? 9) - (order[b.role] ?? order[b.relation] ?? 9)
+      );
+
+      // Who's coming next? pick the soonest visit
+      let soonest = null, soonestDays = 999;
+      sorted.forEach(m => {
+        const visit = nextVisitFromPattern(m.visits);
+        if (visit) {
+          const dayMatch = visit.match(/In (\d+) days?/);
+          const d = dayMatch ? parseInt(dayMatch[1]) : (visit === 'Tomorrow' ? 1 : 0);
+          if (d < soonestDays) { soonestDays = d; soonest = { member: m, when: visit }; }
+        }
+      });
+      const next = document.getElementById('family-next');
+      if (soonest) {
+        next.innerHTML = `<strong>${soonest.member.name}</strong> is visiting <strong>${soonest.when.toLowerCase()}</strong>`;
+        next.hidden = false;
+      }
+
+      grid.innerHTML = sorted.map(member => {
+        const isPrimary = (member.role || '').toLowerCase().includes('primary');
         const tel = PROTOTYPE_NUMBERS[member.name] || '';
-        const visitLine = member.visits
-          ? `<div class="family-meta"><strong>Visits:</strong> ${member.visits}</div>`
-          : '';
-        const locationLine = member.location
-          ? `<div class="family-meta"><strong>Lives in:</strong> ${member.location}</div>`
-          : '';
-        const roleBadge = member.role
-          ? `<div class="family-role">${member.role}</div>`
-          : '';
-        const notes = member.notes
-          ? `<div class="family-meta"><em>${member.notes}</em></div>`
-          : '';
+        const nextVisit = nextVisitFromPattern(member.visits);
+
+        const rows = [];
+        if (member.location)  rows.push(['Lives', member.location]);
+        if (member.visits)    rows.push(['Visits', `<span class="countdown">${nextVisit || member.visits}</span>`]);
+        if (member.notes)     rows.push(['Loves', member.notes.split('.')[0] + '.']);
+
+        const metaHtml = rows.map(([k,v]) =>
+          `<div class="row"><span>${k}</span><span>${v}</span></div>`
+        ).join('');
+
         const callBtn = tel
           ? `<a class="call-btn" href="tel:${tel}" aria-label="Call ${member.name}"><span class="phone-icon">📞</span> Call ${member.name}</a>`
           : '';
+
         return `
-          <div class="family-card">
-            <div class="avatar">${initial}</div>
+          <div class="family-card ${isPrimary ? 'primary' : ''}">
+            <div class="portrait">${portraitSvg(member.name)}</div>
             <div class="family-name">${member.name}</div>
             <div class="family-relation">${member.relation}</div>
-            ${roleBadge}
-            ${locationLine}
-            ${visitLine}
-            ${notes}
+            <div class="family-meta-list">${metaHtml}</div>
             ${callBtn}
           </div>
         `;
       }).join('');
     }
+
     loadFamily();
   </script>
 </body>

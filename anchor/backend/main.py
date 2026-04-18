@@ -441,6 +441,95 @@ def music_page():
     return FileResponse("frontend/music.html")
 
 
+# ─── Unified activity feed ───────────────────────────────────────────────
+# Merges medication, reminder, mood, notification, and conversation events
+# into one chronological stream so the carer dashboard can show an
+# at-a-glance "what has happened today" view.
+
+def _safe_read_json(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text())
+        return data if isinstance(data, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+@app.get("/api/activity/today")
+def activity_today():
+    """Chronological feed of today's events across all logs. Newest last."""
+    today = _today_iso()
+    items: list[dict] = []
+
+    for e in _safe_read_json(Path("data/medication_log.json")):
+        if e.get("date") == today:
+            items.append({"time": e.get("time"), "kind": "medication_taken",
+                          "label": f"{e.get('slot','').title()} medication taken",
+                          "meta": f"marked by {e.get('marked_by','carer')}"})
+
+    for e in _safe_read_json(Path("data/reminder_confirmations.json")):
+        if e.get("date") == today:
+            kind = e.get("kind", "reminder")
+            items.append({"time": e.get("time"), "kind": f"{kind}_taken",
+                          "label": f"{kind.title()}: {e.get('slot','')} confirmed",
+                          "meta": f"marked by {e.get('marked_by','patient')}"})
+
+    for e in _safe_read_json(Path("data/behavior_log.json")):
+        if e.get("date") == today:
+            bits = []
+            if e.get("mood"):         bits.append(f"mood {e['mood']}")
+            if e.get("sleep_hours") is not None: bits.append(f"slept {e['sleep_hours']}h")
+            if e.get("note"):         bits.append(e["note"])
+            items.append({"time": e.get("time"), "kind": "behavior_log",
+                          "label": "Health log entry",
+                          "meta": " · ".join(bits) or "(empty)"})
+
+    for e in _safe_read_json(Path("data/carer_notifications.json")):
+        t = e.get("time", "")
+        if t.startswith(today):
+            items.append({"time": t,
+                          "kind": f"alert_{e.get('urgency','gentle')}",
+                          "label": f"Alert — {e.get('reason','')}".replace("_", " "),
+                          "meta": e.get("patient_said", "")})
+
+    for e in _safe_read_json(Path("data/conversation_log.json")):
+        t = e.get("time", "")
+        if t.startswith(today):
+            items.append({"time": t, "kind": "conversation",
+                          "label": f"Margaret: \u201c{e.get('margaret','')}\u201d",
+                          "meta": f"Anchor: \u201c{e.get('anchor','')}\u201d"})
+
+    items.sort(key=lambda x: x.get("time") or "")
+    return {"items": items, "count": len(items), "date": today}
+
+
+@app.get("/api/dashboard/summary")
+def dashboard_summary():
+    """At-a-glance numbers for the carer dashboard header."""
+    profile = _load_profile()
+    med = _medication_today_status(profile)
+    notifs = _safe_read_json(Path("data/carer_notifications.json"))
+    today = _today_iso()
+    todays_notifs = [n for n in notifs if (n.get("time") or "").startswith(today)]
+    high = sum(1 for n in todays_notifs if n.get("urgency") == "high")
+    gentle = sum(1 for n in todays_notifs if n.get("urgency") == "gentle")
+    behavior = _safe_read_json(Path("data/behavior_log.json"))
+    today_moods = [e for e in behavior if e.get("date") == today and e.get("mood")]
+    last_mood = today_moods[-1]["mood"] if today_moods else None
+    convos = _safe_read_json(Path("data/conversation_log.json"))
+    today_convo = [c for c in convos if (c.get("time") or "").startswith(today)]
+    return {
+        "date": today,
+        "medication_morning_taken": med["morning_taken"],
+        "medication_evening_taken": med["evening_taken"],
+        "alerts_today_high": high,
+        "alerts_today_gentle": gentle,
+        "last_mood": last_mood,
+        "conversations_today": len(today_convo),
+    }
+
+
 # ─── Safety / location (honest placeholder, no fake GPS) ─────────────────
 
 @app.get("/safety")
