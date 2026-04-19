@@ -28,20 +28,19 @@ Each team picks **ONE** track only.
 ### Track 1 — The Creative Renaissance (AI × Media)
 Redefining content creation and interactive art through generative AI. Punk rebellion, fashion, cinematic narrative angle.
 
-### Track 2 — The Inclusive London (AI 4 Good)
+### Track 2 — The Inclusive London (AI 4 Good) ⭐
 Bridging the digital divide. Solving real-world problems for underserved communities. "Warm code" that includes people technology usually leaves behind.
 
-### Track 3 — The Invisible Tube (AI × Agentic Workflows) ⭐
+### Track 3 — The Invisible Tube (AI × Agentic Workflows)
 Breaking down application silos. Enabling AI to manage end-to-end digital workflows autonomously. Building the next invisible operating system.
 
 ### Anchor's track choice
 
-**Primary: Track 3** (Invisible Tube).
-Framing: Margaret's life is scattered across her carer's calendar, family messaging, pharmacy, GP, and medication trackers. Anchor is the single warm interface that talks to all of them, so Margaret never has to operate an app.
+**Submitted to: Track 2 — The Inclusive London (AI 4 Good).**
 
-**Fallback framing for Track 2:** the same product also fits Track 2 ("inclusive, bridges digital divide for vulnerable users who cannot operate conventional apps"). If Saturday morning's opening ceremony hints that Track 2 is less crowded or has warmer judges, reframe the slide 1 opening without changing a line of code.
+Framing: people with dementia are a population almost entirely designed-out of modern AI. Mainstream voice assistants assume intact short-term memory. Chatbots assume you can type, read paragraphs, and tolerate the occasional made-up fact. Screens assume you understand that a button is a button. Anchor inverts every one of those defaults — grounded-only answers, one-circle interface, refusal-not-invention, pattern-watching agent that notices for Margaret when she can't notice for herself. Inclusion isn't a label we added; it's the entire design brief.
 
-**How to decide on Saturday morning:** listen to the opening ceremony track announcements. Count the teams gravitating to each track at check-in. If Track 3 has 40+ teams and Track 2 has 10, pivot to Track 2 framing. The product is dual-compatible.
+**Track 3 positioning (retired after Saturday's opening ceremony).** An earlier version of this doc listed Track 3 (Invisible Tube / agentic workflows) as primary because Anchor does carry genuine agentic architecture — a deterministic observation agent running alongside the LLM, plus a Google Calendar ICS integration. Those remain in the code and the pitch as *technical differentiators*, but they aren't the headline. The Track 2 story is stronger for the peer-vote half of scoring and truer to why we built this.
 
 ## 4. Key schedule
 
@@ -85,7 +84,7 @@ Anchor's four demo scenes are designed for the peer-vote half:
 - Scene 1 (Robert redirection) — emotional peak
 - Scene 2 (repeated question, same warmth) — concept-demonstration
 - Scene 3 (grounded refusal) — credibility
-- Scene 4 (distress escalation with silent carer notification) — Track 3 payoff
+- Scene 4 (distress escalation with silent carer notification) — inclusion payoff: Margaret gets help without being asked to recognise she needs it
 
 Rivals building enterprise dashboards, crypto tools, or dev-infra plays will score well with judges but probably poorly with peers. Anchor is engineered to score on both halves.
 

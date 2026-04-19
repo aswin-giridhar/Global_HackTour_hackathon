@@ -2,7 +2,7 @@
 
 **A companion that holds memory for people who are losing theirs.**
 
-One-day hackathon build plan. Patient-facing Alzheimer's/dementia companion. Track 3 (agentic workflows) with Track 2 (inclusive AI) fallback framing.
+One-day hackathon build plan. Patient-facing Alzheimer's/dementia companion. Submitted to **Track 2 — The Inclusive London (AI 4 Good)**. The agentic-workflow capability (pattern agent, Google Calendar ICS) is retained in the code as a technical differentiator, but the pitch leads with inclusion.
 
 ---
 

@@ -38,7 +38,7 @@ Reason: the 5-few-shot-examples approach in section 4.2 of the build plan achiev
 **Source paper:** OSWorld benchmark, Anthropic lead-planner-with-parallel-subagents pattern.
 
 **The core idea for Anchor:**
-The Track 3 brief is "break down application silos, enable AI to manage end-to-end digital workflows autonomously." For a dementia patient, the silos that matter are the carer's tools — calendar, messaging app, pharmacy app, GP booking portal, family WhatsApp group. When Margaret asks "when is Priya coming?" the answer shouldn't come from a static JSON file; it should come from Priya's real calendar.
+For a dementia patient, the silos that matter most are the carer's tools — calendar, messaging app, pharmacy app, GP booking portal, family WhatsApp group. Margaret can't operate any of them. When she asks "when is Priya coming?" the answer shouldn't come from a static JSON file; it should come from Priya's real calendar. This is where the agentic architecture serves the inclusion story: Margaret gets the answer, Priya doesn't have to maintain a parallel record.
 
 A BenchBreak-style Anchor would orchestrate across: Google Calendar (scheduled visits, appointments), WhatsApp (message Priya when escalation fires), NHS App (next GP appointment), pharmacy (next prescription refill), and a medication-tracker app (last dose time).
 
@@ -54,10 +54,10 @@ Reason: each real integration is 2–4 hours of OAuth + API pain. With 12 hours 
 - Add **one** simulated integration — a file-based carer notification (already in section 4.4 of the build plan).
 - Frame the architecture in the pitch as extensible to real integrations, without actually doing the auth work.
 
-**The Track 3 framing this gives your pitch:**
+**The inclusion framing this gives your pitch:**
 > *"Margaret's life is scattered across her carer's calendar, family WhatsApp, her pharmacy, her GP — five apps she can't operate. Anchor is the single warm interface that talks to all of them, so Margaret doesn't have to."*
 
-That sentence is the Track 3 story. You deliver it with one real (mocked) integration and the architecture showing extensibility.
+That sentence lands the Track 2 inclusion story with specificity — it names the five apps a typical carer juggles, and flips the default that says the patient should be the one opening them. You deliver it with one real (mocked) integration and the architecture showing extensibility.
 
 **If you have time in hour 9–11:** add a real Google Calendar MCP integration so when the agent says "Priya's coming Thursday at three" the answer actually came from Priya's calendar. This is a genuinely strong upgrade and takes ~45 minutes if Google OAuth cooperates.
 
@@ -283,7 +283,7 @@ With concepts 8, 10, 11, and 12 lightly layered into the base build, your pitch 
 
 > *"Anchor is a companion that holds memory for people losing theirs. It answers Margaret's questions from grounded memory only — verified by a second model before she ever hears the answer. It coordinates silently with Priya's calendar and messaging, so Margaret has one warm interface instead of five apps she can't use. And it learns what it doesn't know, so Priya always knows what to tell it next."*
 
-Four sentences. Four research concepts. One product. That's a Track 3 pitch.
+Four sentences. Four research concepts. One product. That's your Track 2 inclusion pitch — the agentic architecture serves the inclusion story, it doesn't replace it.
 
 ## How to brief the coding agent
 

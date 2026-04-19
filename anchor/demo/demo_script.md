@@ -49,7 +49,7 @@
 **Expected Anchor response:**
 > "Priya's at home with James. She's safe, and I can let her know you'd like to speak. Shall I do that?"
 
-**What the audience sees (at the same time):** A notification silently appears on Priya's phone view (top-right overlay). Margaret never hears about the alert. This is the Track 3 story — one warm interface, silent carer coordination.
+**What the audience sees (at the same time):** A notification silently appears on Priya's phone view (top-right overlay). Margaret never hears about the alert. This is the inclusion payoff — Margaret gets help at the moment she needs it, without being asked to notice she needs it. The silent carer coordination is the agentic architecture serving the inclusion story.
 
 ---
 
