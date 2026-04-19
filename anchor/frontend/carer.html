@@ -665,6 +665,122 @@
     .mood-bar .settled  { background: var(--sage-light); }
     .mood-bar .agitated { background: var(--amber); }
     .mood-bar .tearful  { background: var(--terracotta); }
+
+    /* ─── Conversations tab ─── */
+    .convo-chip {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid var(--stone);
+      background: var(--warm-white);
+      color: var(--brown-soft);
+      cursor: pointer;
+    }
+    .convo-chip:hover { border-color: var(--amber); }
+    .convo-chip.active {
+      background: var(--amber);
+      color: white;
+      border-color: var(--amber);
+    }
+    .convo-turn {
+      padding: 12px 14px;
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border-left: 3px solid var(--stone);
+    }
+    .convo-turn.rejected-rule   { border-left-color: var(--amber); }
+    .convo-turn.rejected-critic { border-left-color: #8B7AA8; }
+    .convo-turn.escalated       { border-left-color: var(--terracotta); }
+    .convo-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--brown-soft);
+      margin-bottom: 6px;
+    }
+    .convo-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.03em;
+    }
+    .convo-badge.rule   { background: rgba(212, 165, 116, 0.14); color: var(--amber); }
+    .convo-badge.critic { background: rgba(139, 122, 168, 0.14); color: #6B5C8C; }
+    .convo-badge.escalation { background: rgba(196, 122, 84, 0.14); color: var(--terracotta); }
+    .convo-said    { font-size: 14px; color: var(--brown-deep); margin-bottom: 6px; line-height: 1.4; }
+    .convo-replied { font-size: 13px; color: var(--brown-warm); line-height: 1.4; }
+    .convo-replied strong { font-weight: 600; color: var(--brown-warm); }
+
+    /* ─── Memory tab ─── */
+    .mem-section {
+      background: var(--warm-white);
+      border: 1px solid var(--stone);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .mem-section h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--brown-deep);
+      margin: 0 0 10px;
+    }
+    .mem-row {
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--brown-warm);
+      padding: 4px 0;
+      line-height: 1.5;
+    }
+    .mem-key   { color: var(--brown-soft); font-weight: 500; min-width: 120px; }
+    .mem-value { flex: 1; color: var(--brown-deep); }
+    .mem-value .dead { color: var(--brown-soft); font-style: italic; }
+    .mem-bullet {
+      font-size: 13px;
+      color: var(--brown-warm);
+      padding: 4px 0 4px 14px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .mem-bullet::before {
+      content: '·';
+      position: absolute;
+      left: 2px;
+      color: var(--amber);
+      font-weight: 700;
+    }
+    .gap-card {
+      background: var(--cream);
+      border: 1px solid var(--stone);
+      border-left: 3px solid var(--amber);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .gap-head { font-size: 11px; color: var(--brown-soft); margin-bottom: 4px; }
+    .gap-said { font-size: 13px; color: var(--brown-deep); margin-bottom: 4px; }
+    .gap-note { font-size: 12px; color: var(--brown-warm); font-style: italic; margin-bottom: 8px; }
+    .gap-resolve {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid var(--sage);
+      background: var(--warm-white);
+      color: var(--sage);
+      cursor: pointer;
+    }
+    .gap-resolve:hover { background: var(--sage); color: white; }
+    .gap-resolve:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -705,11 +821,13 @@
   </div>
 
   <nav class="tab-nav" role="tablist" aria-label="Dashboard sections">
-    <button type="button" data-tab="alerts"   class="active" role="tab" aria-selected="true">Alerts</button>
-    <button type="button" data-tab="medicine" role="tab" aria-selected="false">Medicine</button>
-    <button type="button" data-tab="schedule" role="tab" aria-selected="false">Schedule</button>
-    <button type="button" data-tab="family"   role="tab" aria-selected="false">Family</button>
-    <button type="button" data-tab="insights" role="tab" aria-selected="false">Insights</button>
+    <button type="button" data-tab="alerts"        class="active" role="tab" aria-selected="true">Alerts</button>
+    <button type="button" data-tab="medicine"      role="tab" aria-selected="false">Medicine</button>
+    <button type="button" data-tab="conversations" role="tab" aria-selected="false">Conversations</button>
+    <button type="button" data-tab="memory"        role="tab" aria-selected="false">Memory</button>
+    <button type="button" data-tab="schedule"      role="tab" aria-selected="false">Schedule</button>
+    <button type="button" data-tab="family"        role="tab" aria-selected="false">Family</button>
+    <button type="button" data-tab="insights"      role="tab" aria-selected="false">Insights</button>
   </nav>
 
   <!-- ─── Alerts tab (default) — what needs Priya's attention now ─── -->
@@ -753,6 +871,47 @@
         <button class="med-btn" id="med-evening-btn" data-slot="evening">Mark as taken</button>
       </div>
     </div>
+  </section>
+
+  <!-- ─── Conversations tab — browse Margaret's recent turns ─── -->
+  <section class="tab-panel" id="tab-conversations" role="tabpanel">
+    <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
+      <span>Recent conversations</span>
+      <span class="section-sub" id="convo-count">— turns</span>
+    </div>
+    <div class="convo-filter" id="convo-filter" style="display: flex; gap: 6px; padding: 0 16px 10px; flex-wrap: wrap;">
+      <button type="button" class="convo-chip active" data-filter="all">All</button>
+      <button type="button" class="convo-chip" data-filter="rule">Rule-blocked</button>
+      <button type="button" class="convo-chip" data-filter="critic">Critic-blocked</button>
+      <button type="button" class="convo-chip" data-filter="escalation">Escalated</button>
+    </div>
+    <div id="conversations-list" style="padding: 0 16px 16px;">
+      <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
+    </div>
+  </section>
+
+  <!-- ─── Memory tab — profile viewer + gap-resolution queue ─── -->
+  <section class="tab-panel" id="tab-memory" role="tabpanel">
+    <div class="section-title">
+      <span>Gaps Anchor flagged</span>
+      <span class="section-sub" id="gap-count">—</span>
+    </div>
+    <div id="profile-gaps-list" style="padding: 0 16px 12px;">
+      <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 8px;">
+      <span>What Anchor knows about Margaret</span>
+      <span class="section-sub">read-only</span>
+    </div>
+    <div id="memory-view" style="padding: 0 16px 24px;">
+      <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
+    </div>
+    <p style="font-size: 11px; color: var(--brown-soft); padding: 0 16px 20px; line-height: 1.6; font-style: italic;">
+      Editing lives in the profile JSON for now. To change what Anchor
+      knows, open <code>backend/patient_profile.json</code> — every word
+      in here is spoken back to Margaret, so it matters.
+    </p>
   </section>
 
   <!-- ─── Schedule tab — daily routine + live Google Calendar sync ─── -->
@@ -1298,8 +1457,10 @@
     // warm after first visit; tabs with live polling (alerts, medicine,
     // insights) don't need tab-activation hooks.
     const TAB_LOADERS = {
-      schedule: () => { refreshScheduleEditor(); refreshGcalStatus(); },
-      family:   () => refreshFamilyManager(),
+      schedule:      () => { refreshScheduleEditor(); refreshGcalStatus(); },
+      family:        () => refreshFamilyManager(),
+      conversations: () => refreshConversations(),
+      memory:        () => refreshMemory(),
     };
     const loadedTabs = new Set(['alerts']);  // alerts starts visible
 
@@ -1321,6 +1482,234 @@
     document.querySelectorAll('.tab-nav button').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
+
+    // ─── Conversations tab ───
+    // Read-only browser over conversation_log.json. Filter chips narrow
+    // to rule-blocked, critic-blocked, or escalated — letting a carer
+    // (or a pitch judge) see every time the safety rail fired, with the
+    // exact utterance and reply side by side.
+    let convoCache = [];
+    let convoFilter = 'all';
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+      ));
+    }
+
+    function convoMatches(turn, filter) {
+      if (filter === 'all')        return true;
+      if (filter === 'rule')       return turn.rejected_by === 'rule';
+      if (filter === 'critic')     return turn.rejected_by === 'critic';
+      if (filter === 'escalation') return !!turn.escalation;
+      return true;
+    }
+
+    function renderConversations() {
+      const list = document.getElementById('conversations-list');
+      const filtered = convoCache.filter(t => convoMatches(t, convoFilter));
+      document.getElementById('convo-count').textContent =
+        `${filtered.length} of ${convoCache.length} turn${convoCache.length === 1 ? '' : 's'}`;
+      if (!filtered.length) {
+        list.innerHTML = `<div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">
+          ${convoCache.length ? 'No turns match this filter.' : 'No conversations yet today.'}
+        </div>`;
+        return;
+      }
+      list.innerHTML = filtered.map(t => {
+        const time = t.time ? new Date(t.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+        const date = t.time ? new Date(t.time).toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'short'}) : '';
+        const classes = ['convo-turn'];
+        const badges = [];
+        if (t.rejected_by === 'rule') {
+          classes.push('rejected-rule');
+          badges.push('<span class="convo-badge rule">rule-blocked</span>');
+        }
+        if (t.rejected_by === 'critic') {
+          classes.push('rejected-critic');
+          badges.push('<span class="convo-badge critic">critic-blocked</span>');
+        }
+        if (t.escalation) {
+          classes.push('escalated');
+          badges.push('<span class="convo-badge escalation">escalated</span>');
+        }
+        return `
+          <div class="${classes.join(' ')}">
+            <div class="convo-head">
+              <span>${date} · ${time}</span>
+              <span style="display: flex; gap: 4px;">${badges.join('')}</span>
+            </div>
+            <div class="convo-said">“${escapeHtml(t.margaret)}”</div>
+            <div class="convo-replied"><strong>Anchor:</strong> ${escapeHtml(t.anchor)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    async function refreshConversations() {
+      try {
+        const res = await fetch('/api/conversations/recent?limit=80');
+        const data = await res.json();
+        convoCache = data.turns || [];
+        renderConversations();
+      } catch (e) {
+        document.getElementById('conversations-list').innerHTML =
+          '<div style="color: var(--terracotta); font-size: 13px; padding: 10px 0;">Failed to load conversations.</div>';
+        console.warn('conversations', e);
+      }
+    }
+
+    document.querySelectorAll('.convo-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.convo-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        convoFilter = chip.dataset.filter;
+        renderConversations();
+      });
+    });
+
+    // ─── Memory tab ───
+    // Read-only view of patient_profile.json. Each section is laid out
+    // as simple key/value or bullet lists so Priya can sanity-check what
+    // the LLM is actually grounding its answers against. Gaps surface
+    // on top with a "Mark resolved" button that removes the entry from
+    // profile_update_suggestions.json (local to this deploy).
+    function renderMemorySection(title, bodyHtml) {
+      return `<div class="mem-section"><h3>${title}</h3>${bodyHtml}</div>`;
+    }
+    function memRow(key, value) {
+      return `<div class="mem-row"><div class="mem-key">${escapeHtml(key)}</div><div class="mem-value">${value}</div></div>`;
+    }
+    function memBullet(text) {
+      return `<div class="mem-bullet">${escapeHtml(text)}</div>`;
+    }
+
+    function renderMemory(profile) {
+      const view = document.getElementById('memory-view');
+      const parts = [];
+
+      // Identity
+      const i = profile.identity || {};
+      parts.push(renderMemorySection('Who Margaret is', [
+        memRow('Name', escapeHtml(i.name || '—') + (i.preferred_name ? ` (“${escapeHtml(i.preferred_name)}”)` : '')),
+        memRow('Age', escapeHtml(String(i.age || '—'))),
+        memRow('Lives in', escapeHtml(i.location || '—')),
+      ].join('')));
+
+      // Family
+      const fam = (profile.family || []).map(f => {
+        const dead = f.status === 'deceased';
+        const label = `${escapeHtml(f.name)} — ${escapeHtml(f.relation)}`
+          + (dead ? ` <span class="dead">(deceased ${f.year_died || ''})</span>` : '')
+          + (f.role ? ` · ${escapeHtml(f.role)}` : '')
+          + (f.location ? ` · ${escapeHtml(f.location)}` : '')
+          + (f.notes ? `<br><span style="color: var(--brown-soft); font-size: 12px;">${escapeHtml(f.notes)}</span>` : '');
+        return `<div class="mem-bullet" style="padding-bottom: 8px;">${label}</div>`;
+      }).join('');
+      parts.push(renderMemorySection('Family', fam || '<div class="mem-bullet">No family recorded.</div>'));
+
+      // Routine
+      const r = profile.routine || {};
+      const routineRows = Object.entries(r).map(([k, v]) => {
+        const val = (typeof v === 'object' && v !== null)
+          ? `${escapeHtml(v.drug || '')} ${escapeHtml(v.dose || '')} at ${escapeHtml(v.time || '')}${v.notes ? ` — ${escapeHtml(v.notes)}` : ''}`
+          : escapeHtml(String(v));
+        return memRow(k.replace(/_/g, ' '), val);
+      }).join('');
+      parts.push(renderMemorySection('Daily routine', routineRows || '<div class="mem-row"><div class="mem-value">—</div></div>'));
+
+      // Upcoming events
+      const ups = (profile.scheduled_events || []).map(e =>
+        `<div class="mem-bullet"><strong>${escapeHtml(e.when || '')}</strong> — ${escapeHtml(e.what || '')}</div>`
+      ).join('');
+      parts.push(renderMemorySection('Upcoming', ups || '<div class="mem-bullet">No upcoming events.</div>'));
+
+      // Recent events
+      const rec = (profile.recent_events || []).map(e =>
+        `<div class="mem-bullet"><strong>${escapeHtml(e.when || '')}</strong> — ${escapeHtml(e.what || '')}</div>`
+      ).join('');
+      parts.push(renderMemorySection('Recent', rec || '<div class="mem-bullet">No recent events.</div>'));
+
+      // Preferences
+      const pref = profile.preferences || {};
+      const prefRows = Object.entries(pref).map(([k, v]) => {
+        const val = Array.isArray(v) ? v.map(escapeHtml).join(', ') : escapeHtml(String(v));
+        return memRow(k, val || '—');
+      }).join('');
+      parts.push(renderMemorySection('Preferences', prefRows || '<div class="mem-row"><div class="mem-value">—</div></div>'));
+
+      // History / meaningful memories
+      const hist = profile.history || {};
+      const meaningful = (hist.meaningful_memories || []).map(memBullet).join('');
+      const histRows = [
+        memRow('Grew up in', escapeHtml(hist.grew_up_in || '—')),
+        memRow('Profession', escapeHtml(hist.profession || '—')),
+        hist.hobbies_past ? memRow('Hobbies', hist.hobbies_past.map(escapeHtml).join(', ')) : '',
+      ].join('');
+      parts.push(renderMemorySection('Life story',
+        histRows + (meaningful ? `<div style="margin-top: 10px; border-top: 1px solid var(--stone); padding-top: 10px;">${meaningful}</div>` : '')));
+
+      // Care notes
+      const care = (profile.care_notes || []).map(memBullet).join('');
+      parts.push(renderMemorySection('Care notes', care || '<div class="mem-bullet">No care notes.</div>'));
+
+      view.innerHTML = parts.join('');
+    }
+
+    async function refreshMemoryGaps() {
+      const list = document.getElementById('profile-gaps-list');
+      try {
+        const res = await fetch('/api/profile/gaps');
+        const { gaps = [] } = await res.json();
+        document.getElementById('gap-count').textContent =
+          `${gaps.length} open gap${gaps.length === 1 ? '' : 's'}`;
+        if (!gaps.length) {
+          list.innerHTML = '<div style="color: var(--sage); font-size: 13px; text-align: center; padding: 14px 0;">✓ Nothing outstanding. Anchor had an answer for every question.</div>';
+          return;
+        }
+        list.innerHTML = gaps.map((g, i) => {
+          const time = g.time ? new Date(g.time).toLocaleString([], {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '—';
+          return `
+            <div class="gap-card" data-index="${i}">
+              <div class="gap-head">${time}</div>
+              <div class="gap-said">Margaret asked: “${escapeHtml(g.margaret_asked || '')}”</div>
+              <div class="gap-note">${escapeHtml(g.suggestion || "Profile doesn't cover this yet.")}</div>
+              <button type="button" class="gap-resolve" data-index="${i}">Mark as resolved</button>
+            </div>`;
+        }).join('');
+        list.querySelectorAll('.gap-resolve').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const idx = Number(btn.dataset.index);
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+              const res = await fetch('/api/profile/gaps/resolve', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: idx}),
+              });
+              if (!res.ok) throw new Error('resolve failed');
+              refreshMemoryGaps();  // re-render with the item gone
+            } catch (e) {
+              btn.disabled = false;
+              btn.textContent = 'Retry';
+            }
+          });
+        });
+      } catch (e) {
+        list.innerHTML = '<div style="color: var(--terracotta); font-size: 13px;">Failed to load gaps.</div>';
+      }
+    }
+
+    async function refreshMemory() {
+      refreshMemoryGaps();
+      try {
+        const res = await fetch('/api/profile');
+        const profile = await res.json();
+        renderMemory(profile);
+      } catch (e) {
+        document.getElementById('memory-view').innerHTML =
+          '<div style="color: var(--terracotta); font-size: 13px;">Failed to load profile.</div>';
+      }
+    }
 
     document.getElementById('schedule-save').addEventListener('click', async () => {
       const btn = document.getElementById('schedule-save');

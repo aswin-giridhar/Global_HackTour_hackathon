@@ -1041,6 +1041,55 @@ def carer_notifications():
     return read_notifications()
 
 
+# ─── Carer-side visibility: conversation browser + memory viewer ─────────
+# The two endpoints below power the Conversations and Memory tabs on the
+# carer dashboard. Both are read-heavy and touch only existing files.
+
+@app.get("/api/conversations/recent")
+def conversations_recent(limit: int = 50):
+    """Return the last `limit` conversation turns, newest first.
+    Each entry already carries optional rejected_by / escalation fields
+    so the UI can surface them without a second call."""
+    log = _safe_read_json(Path("data/conversation_log.json"))
+    tail = log[-max(0, int(limit)):]
+    tail.reverse()
+    return {"turns": tail, "total_stored": len(log)}
+
+
+@app.get("/api/profile")
+def profile_view():
+    """Return Margaret's full profile for the carer's Memory tab.
+    Read-only in this release — editing lands in the next iteration."""
+    return _load_profile()
+
+
+@app.get("/api/profile/gaps")
+def profile_gaps():
+    """Return the BrowseBack-lite gap log — questions Margaret asked
+    whose answers weren't in her profile. Priya resolves these by
+    updating the profile (today: manually; future: via a form)."""
+    return {"gaps": _safe_read_json(Path("data/profile_update_suggestions.json"))}
+
+
+class GapResolve(BaseModel):
+    index: int
+
+
+@app.post("/api/profile/gaps/resolve")
+def profile_gaps_resolve(payload: GapResolve):
+    """Remove a single gap from the suggestion log once Priya has
+    addressed it (either by updating the profile JSON or deciding
+    it doesn't matter). Idempotent on out-of-range indexes."""
+    path = Path("data/profile_update_suggestions.json")
+    gaps = _safe_read_json(path)
+    i = payload.index
+    if 0 <= i < len(gaps):
+        removed = gaps.pop(i)
+        path.write_text(json.dumps(gaps, indent=2))
+        return {"ok": True, "removed": removed, "remaining": len(gaps)}
+    return {"ok": False, "error": "index out of range", "remaining": len(gaps)}
+
+
 def _check_demo_key(key: str | None) -> None:
     """If DEMO_RESET_KEY is set, require the caller's key to match.
     Unset env var → open (dev/local). This protects prod from accidental
