@@ -264,26 +264,62 @@ Call it from `respond_to_margaret` whenever the rule-based guardrail triggers a 
 
 ---
 
-## Summary — what to actually build
+## Concept 13 — PatternWatch: Cross-Stream Divergence Detection
 
-| Concept | Verdict | Hours | Pitch value |
-|---------|---------|-------|-------------|
-| 7 MetaForge (per-utterance routing) | Skip, mention in Q&A | 0 | Medium |
-| 8 BenchBreak (cross-app coordination) | One mocked integration, optional real Google Calendar | 0–1 | **High** |
-| 9 Evolvr (per-patient style evolution) | Skip, mention in slide 7 | 0 | Low |
-| 10 SOAN-Lite (gentle-escalation fallback) | Small upgrade — urgency classifier for gentle vs high | 0.5 | Medium |
-| 11 Consensus (critic LLM verification) | **BUILD THIS** | 1 | **Highest** |
-| 12 BrowseBack (profile-gap logging) | Small version — log refusals as update suggestions | 1 | High |
+**Source inspiration:** synthesis of multiple lineages rather than a single source paper. Runs closest to SOAN-Lite (Concept 10) and the Anthropic lead-planner-with-parallel-subagents pattern (Concept 8). Full research lineage at the end of this section.
 
-**Total additional work beyond the base build plan: about 2.5 hours.** All three "build" items together fit comfortably in hour 5–8 of the 12-hour schedule.
+**The core idea for Anchor:**
+A patient with dementia cannot notice her own drift — the accumulating anxiety of asking the same question eight times without realising she's repeating. A product that only *responds* leaves her alone with that drift. PatternWatch is a second deterministic agent running alongside the conversation LLM that watches for a specific divergence: a family member named repeatedly across a rolling window vs. that same family member's presence on the calendar. When Margaret keeps asking and the calendar stays silent, the mismatch is the signal.
+
+**Concrete design inside Anchor:**
+- Every turn: extract any living family-member name from the utterance (deceased family filtered at record-time, so the agent can never fire a tragic "*Margaret keeps asking about her husband*" alert).
+- Maintain a 6-hour rolling query log in `data/query_patterns.json`.
+- On every turn, re-check: for each living family member, does the mention count in the window meet threshold (≥3) AND is the person absent from the next 7 days of live calendar events (Concept 8 feed)?
+- If yes AND no cooldown entry exists from the last 12 hours → fire a distinct `insight`-urgency notification to the carer, including the mention count, time window, and a short next-action suggestion.
+- Idempotency via `data/pattern_fired.json` cooldown log.
+- No LLM is ever in the decision loop — observe → store → retrieve → compare → decide → act is fully auditable end-to-end.
+
+**Verdict for the build: BUILT.**
+
+Added on Sunday 19 April as the Track 2 inclusion payoff — Margaret gets a call at the moment she most wanted one, without being asked to recognise she needed it. Implementation lives in `backend/patterns.py` (~200 lines including simulate hook and module docstring). Five unit tests cover threshold, firing, cooldown, event-suppression, and the deceased-family filter. Exposed for stage demos via `POST /api/patterns/simulate?person=Priya&count=4&force=true`, which seeds the query log and bypasses the calendar check so the signal fires deterministically; the demo console (`/demo?key=<DEMO_RESET_KEY>`) has a button that calls this endpoint.
+
+**Why deterministic rather than LLM-based:**
+Two reasons. First, the agent's decisions are *auditable* end-to-end — every trigger can be traced to specific log entries and specific calendar misses, and we can reason about its behaviour the way we can't reason about an LLM's. Second, the failure modes are *decoupled* from the conversation path: if the conversation LLM hallucinates, PatternWatch still fires correctly; if PatternWatch is silent, the conversation still lands. Two agents, two failure surfaces, one patient.
+
+**Research lineage:**
+- **Anthropic lead-planner-with-parallel-subagents engineering pattern** — for running a secondary deterministic agent alongside the primary LLM, with its own state and decision loop. Same source already cited for Concept 8.
+- **SOAN** — Wu et al., *Self-Organizing Agent Network*, AAAI 2026, arXiv:2508.13732 — the graded-urgency framework underlying Concept 10. PatternWatch extends SOAN-Lite with a third `insight` urgency class for non-alarming drift notifications that don't demand immediate action.
+- **Runtime-monitoring / shield-synthesis** lineage from formal methods — the classic pattern of a deterministic monitor running alongside a potentially unsafe policy, producing a bounded safety signal without intervening in the primary decision loop. Informs the "no LLM in the critical path" design choice.
+- **Ecological Momentary Assessment** — Stone & Shiffman, *Ecological Momentary Assessment (EMA) in Behavioral Medicine*, Annals of Behavioral Medicine 16(3), 1994 — the clinical-psychology methodology of passive observation for detecting state changes in ambulatory patients who cannot reliably self-report. PatternWatch is an EMA sensor for one specific dimension: whose absence is Margaret grieving this week.
+
+**The pitch sentence:**
+> *"Margaret can't notice that she's been asking about Priya four times. PatternWatch notices for her — and hands the signal to Priya. It's an agent that makes help arrive without the patient having to recognise she needs it."*
+
+That's the Track 2 inclusion payoff: inclusion is noticing for her, not asking her to notice.
+
+---
+
+## Summary — what actually shipped
+
+| Concept | Verdict | Hours | Pitch value | Status |
+|---------|---------|-------|-------------|--------|
+| 7 MetaForge (per-utterance routing) | Skip, mention in Q&A | 0 | Medium | Not built (as planned) |
+| 8 BenchBreak (cross-app coordination) | One mocked integration, optional real Google Calendar | 0–1 | **High** | **Real Google Calendar ICS shipped** (stronger than planned) |
+| 9 Evolvr (per-patient style evolution) | Skip, mention in slide 7 | 0 | Low | Not built (as planned) |
+| 10 SOAN-Lite (gentle-escalation fallback) | Small upgrade — urgency classifier for gentle vs high | 0.5 | Medium | Shipped (extended with third `insight` class) |
+| 11 Consensus (critic LLM verification) | **BUILD THIS** | 1 | **Highest** | Shipped |
+| 12 BrowseBack (profile-gap logging) | Small version — log refusals as update suggestions | 1 | High | Shipped + Memory-tab UI for resolution |
+| 13 PatternWatch (cross-stream divergence) | *Not in original plan — added Sunday 19 Apr* | 2 | **High** | Shipped (5 unit tests, simulate endpoint) |
+
+**Originally planned additional work beyond the base build plan: about 2.5 hours. Actual shipped work (including Concept 13 and the carer dashboard expansion): considerably more — see `anchor_build_plan.md` §0A for the post-build reality.**
 
 ## The compound pitch story
 
-With concepts 8, 10, 11, and 12 lightly layered into the base build, your pitch sentence becomes:
+With concepts 8, 10, 11, 12, and 13 layered into the base build, your pitch sentence becomes:
 
-> *"Anchor is a companion that holds memory for people losing theirs. It answers Margaret's questions from grounded memory only — verified by a second model before she ever hears the answer. It coordinates silently with Priya's calendar and messaging, so Margaret has one warm interface instead of five apps she can't use. And it learns what it doesn't know, so Priya always knows what to tell it next."*
+> *"Anchor is a companion that holds memory for people losing theirs. It answers Margaret's questions from grounded memory only — verified by a second model before she ever hears the answer. It coordinates silently with Priya's calendar, so Margaret has one warm interface instead of five apps she can't use. It learns what it doesn't know, so Priya always knows what to fill in next. And a second quiet agent watches the conversation from a distance and pages Priya when Margaret is asking about someone who isn't on the calendar — because the patient can't always notice her own drift."*
 
-Four sentences. Four research concepts. One product. That's your Track 2 inclusion pitch — the agentic architecture serves the inclusion story, it doesn't replace it.
+Five sentences. Five research concepts. One product. That's the Track 2 inclusion pitch — the agentic architecture serves the inclusion story, it doesn't replace it.
 
 ## How to brief the coding agent
 
