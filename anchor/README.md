@@ -149,14 +149,29 @@ Deceased family members are filtered at record-time, so the agent cannot fire a 
 
 ### Research concepts implemented
 
-From the build plan at `../docs/anchor_concepts.md`, all four research concepts are in the shipping code:
+From the build plan at `../docs/anchor_concepts.md`, plus one new concept (13) built during the hackathon:
 
-| Concept | Where it lives |
-|---|---|
-| **Concept 8** — BenchBreak: environment-aware recall | `calendar_integration.py` (live ICS) + static scheduled_events |
-| **Concept 10** — SOAN-Lite: graded urgency | `escalation.classify_urgency()` — `high` / `gentle` / `insight` |
-| **Concept 11** — Consensus: critic verification | `agent.verify_with_critic()` at temperature 0 |
-| **Concept 12** — BrowseBack-lite: memory-gap logging | `memory.log_profile_gap()` + Memory-tab resolution queue |
+| Concept | Where it lives | Paper / inspiration |
+|---|---|---|
+| **Concept 8** — BenchBreak: environment-aware recall | `calendar_integration.py` (live ICS) + static scheduled_events | OSWorld benchmark (Xie et al., 2024); Anthropic lead-planner-with-parallel-subagents pattern |
+| **Concept 10** — SOAN-Lite: graded urgency | `escalation.classify_urgency()` — `high` / `gentle` / `insight` | SOAN — Self-Organizing Agent Network (Wu et al., AAAI 2026, arXiv:2508.13732) |
+| **Concept 11** — Consensus: critic verification | `agent.verify_with_critic()` at temperature 0 | ORCH — many analyses, one merge (2026); deterministic multi-model merge without training |
+| **Concept 12** — BrowseBack-lite: memory-gap logging | `memory.log_profile_gap()` + Memory-tab resolution queue | ReMe — Remember Me, Refine Me (Dec 2025); dynamic procedural memory for experience-driven agent evolution |
+| **Concept 13** — PatternWatch: cross-stream divergence detection *(new, built for Anchor)* | `backend/patterns.py` + `/api/patterns/simulate` demo trigger | See discussion below |
+
+#### Concept 13 — PatternWatch (built during the hackathon)
+
+A deterministic observation agent that runs alongside the conversation LLM. Each turn it extracts any living family member Margaret mentioned, maintains a rolling 6-hour window of mentions, and independently cross-checks against the live calendar (Concept 8). When the two streams diverge — a name asked about 3+ times with no upcoming visit or call — it fires a soft "Pattern insight" notification to the carer. Throttled by a 12-hour per-person cooldown; deceased family filtered at record-time so it can never fire a tragic "Margaret keeps asking about her husband" alert.
+
+The observation agent has **no LLM in its loop**. Observe → store → retrieve → compare → decide → act, fully auditable end-to-end, with failure modes that are decoupled from the conversation path's failure modes.
+
+**Research lineage:**
+- Anthropic *lead-planner-with-parallel-subagents* engineering pattern — for running a secondary deterministic agent alongside a primary LLM agent, with its own state and decision loop (same source cited in Concept 8).
+- **SOAN** — Wu et al., *Self-Organizing Agent Network*, AAAI 2026 (arXiv:2508.13732) — the graded-urgency soft-escalation framework underlying Concept 10; PatternWatch extends SOAN-Lite with a third `insight` urgency class for non-alarming drift notifications that don't demand immediate action.
+- **Runtime-monitoring / shield-synthesis** lineage from formal methods — the pattern of a deterministic monitor running alongside a potentially unsafe policy, producing a bounded safety signal without intervening in the primary decision loop.
+- **Ecological Momentary Assessment** methodology (Stone & Shiffman, *Annals of Behavioral Medicine*, 1994) — the clinical-psychology principle of passive observation to detect behavioural drift in patients who cannot reliably self-report, rather than relying on direct self-assessment.
+
+**Why it matters for the Track 2 inclusion story:** Margaret can't notice that she's been asking about Priya eight times. PatternWatch notices for her — and hands the signal to the person who *can* respond. It's an agent that makes help arrive without the patient having to recognise she needs help.
 
 ---
 

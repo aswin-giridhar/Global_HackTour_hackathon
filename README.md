@@ -65,8 +65,16 @@ Most AI assistants answer confidently. The hardest thing Anchor does is **refuse
 2. **Rule-based hallucination check (always on, ~1 ms).** Every mid-sentence capitalised word in a reply must exist in Margaret's memory block, or the reply is blocked and the gap is logged for the carer.
 3. **LLM critic at temperature 0 (high-risk turns only).** A second model reviews replies to questions about medication, falls, fear, or deceased relatives — catching semantic hallucinations the regex can't, and blocking anything that would correct Margaret's painful truths.
 
-### A second agent that notices drift the patient can't
-A deterministic observation agent watches every turn. If Margaret asks about the same family member three-plus times in six hours and there's no visit or call for them on the live calendar, it pages her daughter with a soft "Pattern insight" notification. **No LLM is in that loop** — it's observe → store → retrieve → compare → decide → act, fully auditable, and explicitly filters deceased family so it never fires a tragic alert. Inclusion means noticing for her, not asking her to notice.
+### A second agent that notices drift the patient can't — *PatternWatch*
+A deterministic observation agent watches every turn alongside the LLM. If Margaret asks about the same family member three-plus times in six hours and there's no visit or call for them on the live calendar, it pages her daughter with a soft "Pattern insight" notification. **No LLM is in that loop** — it's observe → store → retrieve → compare → decide → act, fully auditable, 12-hour per-person cooldown, and deceased family filtered at record-time so it never fires a tragic alert. Inclusion means noticing for her, not asking her to notice.
+
+**Research lineage for PatternWatch:**
+- Anthropic's *lead-planner-with-parallel-subagents* engineering pattern — for a secondary deterministic agent running alongside the primary LLM with its own state and decision loop
+- **SOAN** (Wu et al., *Self-Organizing Agent Network*, AAAI 2026, arXiv:2508.13732) — the graded-urgency soft-escalation framework that underlies our `classify_urgency()`; PatternWatch extends it with a third `insight` class for non-alarming drift notifications
+- Runtime-monitoring / shield-synthesis from formal methods — a deterministic monitor running alongside a potentially unsafe policy, producing a bounded safety signal without intervening in the primary decision loop
+- **Ecological Momentary Assessment** methodology (Stone & Shiffman, *Annals of Behavioral Medicine*, 1994) — passive observation to detect behavioural drift in patients who cannot reliably self-report
+
+The core research concepts already in the code (grounded critic, memory-gap logging, cross-app coordination, graded urgency) are enumerated with paper citations in [`anchor/README.md`](./anchor/README.md#research-concepts-implemented).
 
 ### Dual-LLM production resilience
 Primary: **Z.AI GLM-4.5**. Automatic fallback on 429 / auth / SSL error: **Anthropic Claude Sonnet 4.5**, latched per process with a shim class that preserves the OpenAI response shape. Our Z.AI credit ran out mid-hackathon and every request now routes through Claude — which turned a cost problem into a live demonstration of the story we wanted to tell anyway.
