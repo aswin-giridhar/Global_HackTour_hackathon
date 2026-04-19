@@ -77,7 +77,31 @@ const KIND_TITLES = {
 };
 
 let currentReminder = null;
-let dismissedThisSession = new Set();  // slot → dismissed until refresh
+
+// Dismissals persist across page reloads for the current day. Cleared
+// automatically when the date rolls over so the next morning starts fresh.
+const dismissKey = () => `anchor-dismissed-${new Date().toISOString().slice(0, 10)}`;
+function loadDismissed() {
+  try { return new Set(JSON.parse(localStorage.getItem(dismissKey()) || '[]')); }
+  catch { return new Set(); }
+}
+function saveDismissed(set) {
+  try { localStorage.setItem(dismissKey(), JSON.stringify([...set])); }
+  catch { /* quota / disabled — fall through to in-memory-only */ }
+}
+function cleanOldDismissals() {
+  try {
+    const today = dismissKey();
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('anchor-dismissed-') && k !== today) toRemove.push(k);
+    }
+    toRemove.forEach(k => localStorage.removeItem(k));
+  } catch { /* non-fatal */ }
+}
+cleanOldDismissals();
+let dismissedThisSession = loadDismissed();
 
 function speakReminder(r) {
   if (!('speechSynthesis' in window)) return;
@@ -132,7 +156,10 @@ reminderConfirm.addEventListener('click', async () => {
 });
 
 reminderDismiss.addEventListener('click', () => {
-  if (currentReminder) dismissedThisSession.add(currentReminder.slot);
+  if (currentReminder) {
+    dismissedThisSession.add(currentReminder.slot);
+    saveDismissed(dismissedThisSession);
+  }
   hideReminder();
 });
 

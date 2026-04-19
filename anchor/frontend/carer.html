@@ -288,14 +288,14 @@
       cursor: default;
     }
 
-    /* Carer nav strip */
+    /* External-page links (Health log, Safety) — still a pill strip */
     .carer-nav {
       display: flex;
       gap: 8px;
       padding: 10px 16px 0;
       flex-wrap: wrap;
     }
-    .carer-nav a, .carer-nav button {
+    .carer-nav a {
       font-family: var(--font-ui);
       font-size: 12px;
       font-weight: 600;
@@ -307,7 +307,47 @@
       text-decoration: none;
       cursor: pointer;
     }
-    .carer-nav a:hover, .carer-nav button:hover { border-color: var(--amber); }
+    .carer-nav a:hover { border-color: var(--amber); }
+
+    /* Tab navigation — Alerts / Medicine / Schedule / Family / Insights */
+    .tab-nav {
+      display: flex;
+      gap: 6px;
+      margin: 12px 16px 0;
+      padding-bottom: 1px;
+      border-bottom: 1px solid var(--stone);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab-nav button {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--brown-soft);
+      cursor: pointer;
+      position: relative;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+    .tab-nav button:hover { color: var(--brown-warm); }
+    .tab-nav button.active {
+      color: var(--brown-deep);
+    }
+    .tab-nav button.active::after {
+      content: '';
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      bottom: -1px;
+      height: 2px;
+      background: var(--amber);
+      border-radius: 2px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     /* Schedule editor */
     .schedule-panel {
@@ -316,9 +356,7 @@
       background: var(--cream);
       border: 1px solid var(--stone);
       border-radius: 12px;
-      display: none;
     }
-    .schedule-panel.open { display: block; }
     .schedule-row {
       display: grid;
       grid-template-columns: 1fr 110px;
@@ -496,9 +534,7 @@
       background: var(--cream);
       border: 1px solid var(--stone);
       border-radius: 12px;
-      display: none;
     }
-    .family-panel.open { display: block; }
 
     .family-member-row {
       display: grid;
@@ -666,88 +702,107 @@
   <div class="carer-nav">
     <a href="/logs">Health log</a>
     <a href="/safety">Safety &amp; location</a>
-    <button id="toggle-schedule">Edit schedule</button>
-    <button id="toggle-family">Family messages</button>
-    <button id="toggle-gcal">Google Calendar</button>
   </div>
 
-  <div class="schedule-panel" id="gcal-panel">
-    <div class="med-title">Google Calendar (ICS sync)</div>
-    <p style="font-size:12px; color:var(--brown-warm); line-height:1.5; margin: 4px 0 10px;">
-      In Google Calendar → your calendar → Settings → scroll to
-      <em>"Secret address in iCal format"</em> → copy the URL, paste it here.
-      Anchor re-fetches every 60 seconds; when you add a new event to
-      your calendar, Margaret's next answer reflects it.
-    </p>
-    <div class="schedule-row" style="grid-template-columns: 1fr 90px;">
-      <input type="url" id="gcal-url" placeholder="https://calendar.google.com/calendar/ical/..." style="font-family: var(--font-ui); font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--sand); background: white;">
-      <button class="schedule-save" id="gcal-save">Save</button>
+  <nav class="tab-nav" role="tablist" aria-label="Dashboard sections">
+    <button type="button" data-tab="alerts"   class="active" role="tab" aria-selected="true">Alerts</button>
+    <button type="button" data-tab="medicine" role="tab" aria-selected="false">Medicine</button>
+    <button type="button" data-tab="schedule" role="tab" aria-selected="false">Schedule</button>
+    <button type="button" data-tab="family"   role="tab" aria-selected="false">Family</button>
+    <button type="button" data-tab="insights" role="tab" aria-selected="false">Insights</button>
+  </nav>
+
+  <!-- ─── Alerts tab (default) — what needs Priya's attention now ─── -->
+  <section class="tab-panel active" id="tab-alerts" role="tabpanel">
+    <div class="section-title">
+      <span>Alerts</span>
+      <span class="section-sub">live</span>
     </div>
-    <div id="gcal-status" style="font-size: 11px; color: var(--brown-soft); margin-top: 10px;">Checking…</div>
-    <button id="gcal-clear" style="font-family: var(--font-ui); font-size: 11px; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--sand); background: var(--warm-white); color: var(--brown-soft); cursor: pointer; margin-top: 6px; display: none;">Disconnect</button>
-  </div>
+    <div id="notifications"></div>
+    <div id="empty-state">
+      <div class="empty-icon">🏠</div>
+      <div class="empty-text">No alerts right now.</div>
+      <div class="empty-sub">Margaret is resting quietly.</div>
+    </div>
 
-  <div class="family-panel" id="family-panel">
-    <div class="med-title">Photos &amp; voice messages</div>
-    <div id="family-manager-list"></div>
-  </div>
+    <div class="section-title">
+      <span>Today's activity</span>
+      <span class="section-sub">chronological</span>
+    </div>
+    <div class="activity-feed" id="activity-feed">
+      <div class="activity-empty">Quiet so far today.</div>
+    </div>
+  </section>
 
-  <div class="schedule-panel" id="schedule-panel">
-    <div class="med-title">Edit Margaret's schedule</div>
-    <div class="schedule-row"><label>Morning medicine time</label><input type="time" id="sched-med-morning"></div>
-    <div class="schedule-row"><label>Evening medicine time</label><input type="time" id="sched-med-evening"></div>
-    <div class="schedule-row"><label>Morning tea</label><input type="time" id="sched-tea"></div>
-    <div class="schedule-row"><label>Lunch</label><input type="time" id="sched-lunch"></div>
-    <div class="schedule-row"><label>Dinner</label><input type="time" id="sched-dinner"></div>
-    <button class="schedule-save" id="schedule-save">Save schedule</button>
-    <span id="schedule-msg" style="margin-left:10px;font-size:11px;color:var(--sage);"></span>
-  </div>
-
-  <div class="med-panel" id="med-panel">
-    <div class="med-title">Today's medication</div>
-    <div class="med-row">
-      <div>
-        <div class="med-label" id="med-morning-label">Morning dose</div>
-        <div class="med-sub" id="med-morning-sub">—</div>
+  <!-- ─── Medicine tab — today's medication ─── -->
+  <section class="tab-panel" id="tab-medicine" role="tabpanel">
+    <div class="med-panel" id="med-panel">
+      <div class="med-title">Today's medication</div>
+      <div class="med-row">
+        <div>
+          <div class="med-label" id="med-morning-label">Morning dose</div>
+          <div class="med-sub" id="med-morning-sub">—</div>
+        </div>
+        <button class="med-btn" id="med-morning-btn" data-slot="morning">Mark as taken</button>
       </div>
-      <button class="med-btn" id="med-morning-btn" data-slot="morning">Mark as taken</button>
-    </div>
-    <div class="med-row">
-      <div>
-        <div class="med-label" id="med-evening-label">Evening dose</div>
-        <div class="med-sub" id="med-evening-sub">—</div>
+      <div class="med-row">
+        <div>
+          <div class="med-label" id="med-evening-label">Evening dose</div>
+          <div class="med-sub" id="med-evening-sub">—</div>
+        </div>
+        <button class="med-btn" id="med-evening-btn" data-slot="evening">Mark as taken</button>
       </div>
-      <button class="med-btn" id="med-evening-btn" data-slot="evening">Mark as taken</button>
     </div>
-  </div>
+  </section>
 
-  <div class="section-title">
-    <span>Alerts</span>
-    <span class="section-sub">live</span>
-  </div>
-  <div id="notifications"></div>
+  <!-- ─── Schedule tab — daily routine + live Google Calendar sync ─── -->
+  <section class="tab-panel" id="tab-schedule" role="tabpanel">
+    <div class="schedule-panel" id="schedule-panel">
+      <div class="med-title">Edit Margaret's schedule</div>
+      <div class="schedule-row"><label>Morning medicine time</label><input type="time" id="sched-med-morning"></div>
+      <div class="schedule-row"><label>Evening medicine time</label><input type="time" id="sched-med-evening"></div>
+      <div class="schedule-row"><label>Morning tea</label><input type="time" id="sched-tea"></div>
+      <div class="schedule-row"><label>Lunch</label><input type="time" id="sched-lunch"></div>
+      <div class="schedule-row"><label>Dinner</label><input type="time" id="sched-dinner"></div>
+      <button class="schedule-save" id="schedule-save">Save schedule</button>
+      <span id="schedule-msg" style="margin-left:10px;font-size:11px;color:var(--sage);"></span>
+    </div>
 
-  <div id="empty-state">
-    <div class="empty-icon">🏠</div>
-    <div class="empty-text">No alerts right now.</div>
-    <div class="empty-sub">Margaret is resting quietly.</div>
-  </div>
+    <div class="schedule-panel" id="gcal-panel">
+      <div class="med-title">Google Calendar (ICS sync)</div>
+      <p style="font-size:12px; color:var(--brown-warm); line-height:1.5; margin: 4px 0 10px;">
+        In Google Calendar → your calendar → Settings → scroll to
+        <em>"Secret address in iCal format"</em> → copy the URL, paste it here.
+        Anchor re-fetches every 60 seconds; when you add a new event to
+        your calendar, Margaret's next answer reflects it.
+      </p>
+      <div class="schedule-row" style="grid-template-columns: 1fr 90px;">
+        <input type="url" id="gcal-url" placeholder="https://calendar.google.com/calendar/ical/..." style="font-family: var(--font-ui); font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--sand); background: white;">
+        <button class="schedule-save" id="gcal-save">Save</button>
+      </div>
+      <div id="gcal-status" style="font-size: 11px; color: var(--brown-soft); margin-top: 10px;">Checking…</div>
+      <button id="gcal-clear" style="font-family: var(--font-ui); font-size: 11px; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--sand); background: var(--warm-white); color: var(--brown-soft); cursor: pointer; margin-top: 6px; display: none;">Disconnect</button>
+    </div>
+  </section>
 
-  <div class="section-title">
-    <span>Today's activity</span>
-    <span class="section-sub">chronological</span>
-  </div>
-  <div class="activity-feed" id="activity-feed">
-    <div class="activity-empty">Quiet so far today.</div>
-  </div>
+  <!-- ─── Family tab — photos & voice messages ─── -->
+  <section class="tab-panel" id="tab-family" role="tabpanel">
+    <div class="family-panel" id="family-panel">
+      <div class="med-title">Photos &amp; voice messages</div>
+      <div id="family-manager-list"></div>
+    </div>
+  </section>
 
-  <div class="section-title">
-    <span>Insights</span>
-    <span class="section-sub">last 7 days</span>
-  </div>
-  <div id="insights-panel" style="padding: 0 16px 16px;">
-    <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
-  </div>
+  <!-- ─── Insights tab — 7-day stats ─── -->
+  <section class="tab-panel" id="tab-insights" role="tabpanel">
+    <div class="section-title">
+      <span>Insights</span>
+      <span class="section-sub">last 7 days</span>
+    </div>
+    <div id="insights-panel" style="padding: 0 16px 16px;">
+      <div style="color: var(--brown-soft); font-style: italic; font-size: 13px; text-align: center; padding: 20px 0;">Loading…</div>
+    </div>
+  </section>
 
   <div style="padding: 16px; text-align: center; font-size: 12px; color: var(--brown-soft);">
     <a href="/privacy" style="color: var(--brown-warm); text-decoration: none; border-bottom: 1px dotted var(--sand);">Privacy &amp; data handling</a>
@@ -1041,12 +1096,6 @@
     setInterval(refreshInsights, 30000);
 
     // ─── Google Calendar ICS panel ───
-    const gcalPanel = document.getElementById('gcal-panel');
-    document.getElementById('toggle-gcal').addEventListener('click', () => {
-      gcalPanel.classList.toggle('open');
-      if (gcalPanel.classList.contains('open')) refreshGcalStatus();
-    });
-
     async function refreshGcalStatus() {
       try {
         const res = await fetch('/api/schedule/ics_url');
@@ -1107,12 +1156,6 @@
     });
 
     // ─── Family manager (photos + voice messages) ───
-    const famPanel = document.getElementById('family-panel');
-    document.getElementById('toggle-family').addEventListener('click', () => {
-      famPanel.classList.toggle('open');
-      if (famPanel.classList.contains('open')) refreshFamilyManager();
-    });
-
     async function refreshFamilyManager() {
       const [famRes, photoRes, voiceRes] = await Promise.all([
         fetch('/api/family'),
@@ -1237,20 +1280,46 @@
     }
 
     // ─── Schedule editor ───
-    const schedPanel = document.getElementById('schedule-panel');
-    document.getElementById('toggle-schedule').addEventListener('click', async () => {
-      schedPanel.classList.toggle('open');
-      if (schedPanel.classList.contains('open')) {
-        try {
-          const res = await fetch('/api/schedule');
-          const s = (await res.json()).routine || {};
-          document.getElementById('sched-med-morning').value = (s.medication_morning && s.medication_morning.time) || '';
-          document.getElementById('sched-med-evening').value = (s.medication_evening && s.medication_evening.time) || '';
-          document.getElementById('sched-tea').value    = s.tea    || '';
-          document.getElementById('sched-lunch').value  = s.lunch  || '';
-          document.getElementById('sched-dinner').value = s.dinner || '';
-        } catch (e) { console.warn('schedule load failed', e); }
+    async function refreshScheduleEditor() {
+      try {
+        const res = await fetch('/api/schedule');
+        const s = (await res.json()).routine || {};
+        document.getElementById('sched-med-morning').value = (s.medication_morning && s.medication_morning.time) || '';
+        document.getElementById('sched-med-evening').value = (s.medication_evening && s.medication_evening.time) || '';
+        document.getElementById('sched-tea').value    = s.tea    || '';
+        document.getElementById('sched-lunch').value  = s.lunch  || '';
+        document.getElementById('sched-dinner').value = s.dinner || '';
+      } catch (e) { console.warn('schedule load failed', e); }
+    }
+
+    // ─── Tab navigation ───
+    // Single switcher that flips active state on buttons + panels, then
+    // triggers any deferred-load work for the newly-active tab. Data stays
+    // warm after first visit; tabs with live polling (alerts, medicine,
+    // insights) don't need tab-activation hooks.
+    const TAB_LOADERS = {
+      schedule: () => { refreshScheduleEditor(); refreshGcalStatus(); },
+      family:   () => refreshFamilyManager(),
+    };
+    const loadedTabs = new Set(['alerts']);  // alerts starts visible
+
+    function switchTab(target) {
+      document.querySelectorAll('.tab-nav button').forEach(b => {
+        const on = b.dataset.tab === target;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.toggle('active', p.id === `tab-${target}`);
+      });
+      if (!loadedTabs.has(target) && TAB_LOADERS[target]) {
+        TAB_LOADERS[target]();
+        loadedTabs.add(target);
       }
+    }
+
+    document.querySelectorAll('.tab-nav button').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
     document.getElementById('schedule-save').addEventListener('click', async () => {
