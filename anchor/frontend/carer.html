@@ -593,6 +593,60 @@
     .fam-btn.has-content { color: var(--sage); border-color: rgba(142, 168, 118, 0.5); }
     .fam-btn input[type="file"] { display: none; }
 
+    /* Tiny square icon buttons for play/delete on existing content */
+    .fam-icon {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--sand);
+      background: var(--warm-white);
+      color: var(--brown-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+    }
+    .fam-icon:hover { border-color: var(--amber); color: var(--brown-deep); }
+    .fam-icon.danger:hover { border-color: var(--terracotta); color: var(--terracotta); }
+    .fam-icon:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Thumbnail becomes a click-target when a real photo is loaded */
+    .fam-thumb.clickable { cursor: zoom-in; }
+    .fam-thumb.clickable:hover { box-shadow: 0 0 0 2px var(--amber); }
+
+    /* Photo lightbox — click a thumbnail to see it full-size */
+    .photo-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 22, 18, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      cursor: zoom-out;
+      animation: lightbox-fade 0.18s ease-out;
+    }
+    @keyframes lightbox-fade { from { opacity: 0 } to { opacity: 1 } }
+    .photo-lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .photo-lightbox-caption {
+      position: absolute;
+      bottom: 6vh;
+      color: var(--warm-white);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
     /* ─── Insights panel ─── */
     .insight-grid {
       display: grid;
@@ -1315,6 +1369,23 @@
     });
 
     // ─── Family manager (photos + voice messages) ───
+    function openPhotoLightbox(url, name) {
+      // Close any already-open lightbox first
+      document.querySelectorAll('.photo-lightbox').forEach(n => n.remove());
+      const overlay = document.createElement('div');
+      overlay.className = 'photo-lightbox';
+      overlay.innerHTML = `
+        <img src="${url}" alt="${name || ''}">
+        <div class="photo-lightbox-caption">${name || ''} — click anywhere to close</div>
+      `;
+      overlay.addEventListener('click', () => overlay.remove());
+      document.body.appendChild(overlay);
+      const onEsc = (e) => {
+        if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onEsc); }
+      };
+      document.addEventListener('keydown', onEsc);
+    }
+
     async function refreshFamilyManager() {
       const [famRes, photoRes, voiceRes] = await Promise.all([
         fetch('/api/family'),
@@ -1328,28 +1399,87 @@
       container.innerHTML = fam.map(m => {
         const hasPhoto = !!photos[m.name];
         const hasVoice = !!voices[m.name];
+        const photoUrl = hasPhoto ? `${photos[m.name]}?t=${Date.now()}` : '';
         const thumb = hasPhoto
-          ? `<img src="${photos[m.name]}?t=${Date.now()}" alt="">`
+          ? `<img src="${photoUrl}" alt="">`
           : `<div style="width:100%;height:100%;background:var(--cream);display:flex;align-items:center;justify-content:center;color:var(--brown-warm);font-weight:600;font-family:'Cormorant Garamond',serif;font-size:18px;">${m.name[0]}</div>`;
+        const thumbClass = hasPhoto ? 'fam-thumb clickable' : 'fam-thumb';
+        const photoLabel = hasPhoto ? '↻ Replace photo' : '+ Photo';
+        const voiceLabel = hasVoice ? '↻ Replace voice' : '+ Voice';
         return `
           <div class="family-member-row" data-name="${m.name}">
-            <div class="fam-thumb">${thumb}</div>
+            <div class="${thumbClass}" ${hasPhoto ? `data-preview-photo="${photoUrl}" data-preview-name="${m.name}"` : ''}>${thumb}</div>
             <div class="fam-info">
               <div class="fam-info-name">${m.name}</div>
               <div class="fam-info-rel">${m.relation}</div>
             </div>
             <div class="fam-actions">
               <label class="fam-btn ${hasPhoto ? 'has-content' : ''}">
-                ${hasPhoto ? '✓ Photo' : '+ Photo'}
+                ${photoLabel}
                 <input type="file" accept="image/*" data-kind="photo" data-name="${m.name}">
               </label>
+              ${hasPhoto ? `<button type="button" class="fam-icon danger" data-del-photo="${m.name}" title="Delete photo" aria-label="Delete photo of ${m.name}">×</button>` : ''}
               <button class="fam-btn record-btn ${hasVoice ? 'has-content' : ''}" data-name="${m.name}">
-                ${hasVoice ? '✓ Voice' : '+ Voice'}
+                ${voiceLabel}
               </button>
+              ${hasVoice ? `<button type="button" class="fam-icon" data-play-voice="${m.name}" title="Play voice message" aria-label="Play voice message from ${m.name}">▶</button>` : ''}
+              ${hasVoice ? `<button type="button" class="fam-icon danger" data-del-voice="${m.name}" title="Delete voice message" aria-label="Delete voice message from ${m.name}">×</button>` : ''}
             </div>
           </div>
         `;
       }).join('');
+
+      // Wire thumbnail click → full-size lightbox
+      container.querySelectorAll('[data-preview-photo]').forEach(el => {
+        el.addEventListener('click', () => {
+          openPhotoLightbox(el.dataset.previewPhoto, el.dataset.previewName);
+        });
+      });
+
+      // Wire photo delete
+      container.querySelectorAll('[data-del-photo]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const name = btn.dataset.delPhoto;
+          if (!confirm(`Delete ${name}'s photo? The stylised watercolour will return.`)) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch(`/api/family/photo/${encodeURIComponent(name)}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            refreshFamilyManager();
+          } catch (e) {
+            console.error('delete photo', e);
+            btn.disabled = false;
+            alert('Could not delete photo — please try again.');
+          }
+        });
+      });
+
+      // Wire voice play (preview before deleting)
+      container.querySelectorAll('[data-play-voice]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const name = btn.dataset.playVoice;
+          const a = new Audio(`/api/family/voice/${encodeURIComponent(name)}?t=${Date.now()}`);
+          a.play().catch(err => console.warn('voice play', err));
+        });
+      });
+
+      // Wire voice delete
+      container.querySelectorAll('[data-del-voice]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const name = btn.dataset.delVoice;
+          if (!confirm(`Delete ${name}'s voice message? Margaret won't be able to hear it from the Family page anymore.`)) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch(`/api/family/voice/${encodeURIComponent(name)}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            refreshFamilyManager();
+          } catch (e) {
+            console.error('delete voice', e);
+            btn.disabled = false;
+            alert('Could not delete voice — please try again.');
+          }
+        });
+      });
 
       // Wire photo uploads
       container.querySelectorAll('input[data-kind="photo"]').forEach(inp => {
