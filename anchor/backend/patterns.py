@@ -196,8 +196,8 @@ def check_asking_pattern(profile: dict, scheduled_events: list[dict]) -> dict | 
             "patient_said": recent[-1]["utterance"],
             "anchor_replied": (
                 f"Margaret has asked about {name} {len(recent)} times in the last "
-                f"{WINDOW_HOURS} hours, but there's no {name.lower()} event on "
-                f"the schedule for the next {LOOKAHEAD_DAYS} days. "
+                f"{WINDOW_HOURS} hours, but there's no visit or call for them "
+                f"on the schedule for the next {LOOKAHEAD_DAYS} days. "
                 f"A short call or a quick visit might help."
             ),
             "urgency": "insight",
