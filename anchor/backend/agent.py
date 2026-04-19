@@ -202,7 +202,7 @@ ANCHOR'S PROPOSED RESPONSE:
 
 Check all of these:
 1. Does every named person, date, event, or specific fact in the response appear in the memory block? (YES it's grounded / NO it's invented)
-2. Does the response correct Margaret on a painful truth directly? (e.g., saying "Robert is dead" when she asked about him — this is NOT allowed)
+2. Does the response correct Margaret on a painful truth directly? (e.g., saying "Robert is dead" or "Robert passed away" — this is NOT allowed). BUT a warm redirect like "Robert's not here today" or "Robert's not here right now" IS allowed and should be APPROVED.
 3. Does the response contain medical advice? (NOT allowed)
 4. Does the response scold Margaret for forgetting or repeating? (NOT allowed)
 
