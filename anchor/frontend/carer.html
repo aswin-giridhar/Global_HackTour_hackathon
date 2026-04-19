@@ -144,6 +144,10 @@
       background: var(--terracotta);
     }
 
+    .notif.insight::before {
+      background: #8B7AA8;  /* soft heather — calm, reflective, distinct from red alerts */
+    }
+
     .notif-header {
       display: flex;
       align-items: center;
@@ -165,6 +169,11 @@
     .notif.high .notif-badge {
       background: rgba(196, 122, 84, 0.12);
       color: var(--terracotta);
+    }
+
+    .notif.insight .notif-badge {
+      background: rgba(139, 122, 168, 0.14);
+      color: #6B5C8C;
     }
 
     .notif-time {
@@ -799,16 +808,28 @@
       }
 
       emptyState.style.display = 'none';
-      container.innerHTML = notifs.slice().reverse().map(n => `
-        <div class="notif ${n.urgency || 'gentle'}">
+      container.innerHTML = notifs.slice().reverse().map(n => {
+        const urg = n.urgency || 'gentle';
+        const badgeLabel = urg === 'high' ? '⚠ Urgent'
+                         : urg === 'insight' ? '✦ Pattern insight'
+                         : '💡 Gentle';
+        const isInsight = urg === 'insight';
+        const patientLine = isInsight
+          ? `Margaret asked about <strong>${n.person || 'someone'}</strong> ${n.mention_count || ''}× recently`
+          : `Margaret said: "${n.patient_said}"`;
+        const contextLine = isInsight
+          ? `<strong>Anchor noticed:</strong> ${n.anchor_replied}`
+          : `<strong>Anchor said:</strong> ${n.anchor_replied}`;
+        return `
+        <div class="notif ${urg}">
           <div class="notif-header">
-            <span class="notif-badge">${(n.urgency || 'gentle') === 'high' ? '⚠ Urgent' : '💡 Gentle'}</span>
+            <span class="notif-badge">${badgeLabel}</span>
             <span class="notif-time">${new Date(n.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
           </div>
-          <div class="notif-msg">Margaret said: "${n.patient_said}"</div>
-          <div class="notif-context"><strong>Anchor said:</strong> ${n.anchor_replied}</div>
-        </div>
-      `).join('');
+          <div class="notif-msg">${patientLine}</div>
+          <div class="notif-context">${contextLine}</div>
+        </div>`;
+      }).join('');
     }
 
     // ─── Medication panel ───

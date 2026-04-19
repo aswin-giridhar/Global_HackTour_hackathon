@@ -408,4 +408,13 @@ def respond_to_margaret(user_input: str) -> dict:
     # 8. Log interaction
     log_interaction(user_input, raw, escalation_fired)
 
+    # 9. Agentic pattern check — record the mention and see if Margaret
+    #    has been asking about someone repeatedly without a scheduled
+    #    visit. Runs every turn, cheap, idempotent via cooldown.
+    try:
+        from patterns import record_and_check
+        record_and_check(user_input, profile, profile.get("scheduled_events", []))
+    except Exception as e:
+        print(f"[PATTERNS] skipped: {e}")
+
     return {"response": raw, "escalation_fired": escalation_fired}

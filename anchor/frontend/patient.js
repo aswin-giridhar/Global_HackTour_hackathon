@@ -20,6 +20,25 @@ const responseText   = document.getElementById('response-text');
 const audioEl        = document.getElementById('anchor-voice');
 const buttons        = document.querySelectorAll('#fallback-buttons button');
 
+// ─── Ambient audio cues ────────────────────────────────────────────────
+// Presence cues, not alerts. Volume is low and throttled so they never
+// compete with Margaret's TTS voice or startle her. The chime plays when
+// a reminder appears; the ack plays briefly when the mic opens.
+const chimeEl = new Audio('/static/assets/chime.wav');
+const ackEl   = new Audio('/static/assets/ack.wav');
+chimeEl.volume = 0.35;
+ackEl.volume   = 0.22;
+let lastCueAt = 0;
+function playCue(el) {
+  const now = Date.now();
+  if (now - lastCueAt < 1200) return;  // debounce — never two cues in rapid sequence
+  lastCueAt = now;
+  try {
+    el.currentTime = 0;
+    el.play().catch(() => { /* autoplay policy — ignore silently */ });
+  } catch (_) { /* ignore */ }
+}
+
 // ─── Demo overlay: show carer notifications if ?demo=1 ───
 if (new URLSearchParams(window.location.search).has('demo')) {
   document.getElementById('carer-overlay').style.display = 'block';
@@ -84,7 +103,9 @@ function showReminder(r) {
   reminderLabel.textContent = r.label;
   reminderDetail.textContent = r.detail || `Scheduled ${r.time}`;
   reminderOverlay.hidden = false;
-  speakReminder(r);
+  playCue(chimeEl);
+  // Give the chime a beat to land before TTS starts talking
+  setTimeout(() => speakReminder(r), 450);
 }
 
 function hideReminder() {
@@ -187,6 +208,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
   recognition.onstart = () => {
     app.classList.add('listening');
+    playCue(ackEl);
     console.log('[Anchor] Listening...');
   };
   recognition.onend = () => {

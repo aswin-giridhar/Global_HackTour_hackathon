@@ -44,6 +44,8 @@ async def lifespan(app: FastAPI):
         "reminder_confirmations.json",
         "missed_med_fired.json",
         "location.json",
+        "query_patterns.json",
+        "pattern_fired.json",
     ]:
         fpath = data_dir / fname
         if not fpath.exists():
@@ -955,6 +957,65 @@ def simulate_wandering():
     return {"ok": True, "note": "Simulated wandering alert fired to carer."}
 
 
+@app.get("/api/patterns/state")
+def patterns_state():
+    """Return the recent query log so the carer dashboard can show
+    "asked 4× today about Priya" next to the notification."""
+    import patterns
+    log = patterns._load_json(patterns.QUERY_LOG_PATH, [])
+    # Return last 24h, grouped by person
+    from datetime import datetime, timedelta
+    cutoff = datetime.now() - timedelta(hours=24)
+    recent = []
+    for e in log:
+        try:
+            if datetime.fromisoformat(e["time"]) >= cutoff:
+                recent.append(e)
+        except (KeyError, ValueError):
+            continue
+    counts: dict[str, int] = {}
+    for e in recent:
+        counts[e["person"]] = counts.get(e["person"], 0) + 1
+    return {"last_24h": counts, "total": len(recent)}
+
+
+@app.post("/api/patterns/simulate")
+def patterns_simulate(person: str = "Priya", count: int = 4, force: bool = True):
+    """Demo hook — seeds a repeated-asking pattern so the agentic signal
+    fires on the next check. Useful on stage to guarantee Priya's phone
+    shows the insight during the demo.
+
+    force=True (default) pretends the calendar is empty for `person`, so
+    the signal always fires on seeded data. Set force=False to run the
+    real check against the live schedule (useful for verifying the
+    suppression logic — e.g. the default Priya/David both have scheduled
+    events and should NOT fire)."""
+    import patterns
+    profile = _load_profile()
+    if force:
+        events: list[dict] = []
+    else:
+        try:
+            from calendar_integration import get_live_events
+            live = get_live_events()
+            events = live if live else profile.get("scheduled_events", [])
+        except Exception:
+            events = profile.get("scheduled_events", [])
+    signal = patterns.simulate(profile, events, person=person, count=count)
+    return {
+        "ok": True,
+        "fired": signal is not None,
+        "force": force,
+        "signal": signal,
+        "note": (
+            f"Seeded {count} mentions of {person}. "
+            + ("Calendar override: no event. Signal fired."
+               if force else
+               "Real calendar used — signal only fires if no upcoming event.")
+        ),
+    }
+
+
 # ─── Mood / sleep / behavior page (carer) ────────────────────────────────
 
 @app.get("/logs")
@@ -1003,6 +1064,8 @@ def reset(key: str | None = None):
         "reminder_confirmations.json",
         "missed_med_fired.json",
         "location.json",
+        "query_patterns.json",
+        "pattern_fired.json",
     ]:
         fpath = data_dir / fname
         fpath.write_text("[]")

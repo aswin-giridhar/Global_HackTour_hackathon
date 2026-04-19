@@ -88,6 +88,9 @@
     <p>Profile, family photos, voice messages and music are <em>not</em> touched.</p>
 
     <button id="reset-btn" class="danger">Reset Margaret's data for demo</button>
+    <button id="pattern-btn" class="secondary" style="margin-top: 0.75rem;">
+      Fire agentic pattern insight (Priya × 4)
+    </button>
     <div id="status"></div>
 
     <div class="links">
@@ -119,6 +122,27 @@
         status.textContent = `Reset failed: ${e.message}`;
       } finally {
         btn.disabled = false;
+      }
+    });
+
+    const patternBtn = document.getElementById('pattern-btn');
+    patternBtn.addEventListener('click', async () => {
+      patternBtn.disabled = true;
+      status.className = '';
+      status.textContent = 'Seeding pattern…';
+      try {
+        const res = await fetch('/api/patterns/simulate?person=Priya&count=4', { method: 'POST' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        status.className = data.fired ? 'ok' : 'err';
+        status.textContent = data.fired
+          ? "Pattern insight fired. Open /carer — Priya's phone will show it within 2s."
+          : `No signal fired: ${data.note}`;
+      } catch (e) {
+        status.className = 'err';
+        status.textContent = `Failed: ${e.message}`;
+      } finally {
+        patternBtn.disabled = false;
       }
     });
   </script>
