@@ -75,18 +75,57 @@ Primary: **Z.AI GLM-4.5**. Automatic fallback on 429 / auth / SSL error: **Anthr
 
 ## Architecture at a glance
 
+```mermaid
+flowchart LR
+    M(["📱 Margaret<br/>voice · tap · type"])
+    P(["📱 Priya<br/>7-tab dashboard"])
+
+    subgraph Backend["FastAPI backend"]
+        direction TB
+        Agent["Conversation<br/>agent"]
+        Watcher["Pattern-watching<br/>agent<br/><i>deterministic, no LLM</i>"]
+
+        subgraph Safety["Three-layer safety rail"]
+            direction TB
+            L1["1 · Grounded prompt<br/><i>answers only from profile</i>"]
+            L2{"2 · Rule check<br/><i>regex, always runs</i>"}
+            L3{"3 · LLM critic<br/><i>temp 0, high-risk only</i>"}
+        end
+
+        Refuse["'I don't have that<br/>written down, love.'"]
+    end
+
+    subgraph LLMs["LLM routing"]
+        direction TB
+        GLM["Z.AI<br/>GLM-4.5"]
+        Claude["Claude<br/>Sonnet 4.5"]
+        GLM -. "on 429 / auth / SSL" .-> Claude
+    end
+
+    M -- "POST /api/speak" --> Agent
+    Agent --> L1
+    L1 --> GLM
+    GLM --> L2
+    Claude --> L2
+    L2 -- "high-risk turn" --> L3
+    L2 -- "safe" --> TTS["ElevenLabs TTS<br/><i>MD5-cached</i>"]
+    L3 -- "approved" --> TTS
+    L2 -. "blocked" .-> Refuse
+    L3 -. "blocked" .-> Refuse
+    Refuse --> TTS
+    TTS -- "audio" --> M
+
+    Agent -. "every turn" .-> Watcher
+    Watcher -- "pattern fires" --> P
+
+    style Refuse fill:#F5EDE0,stroke:#D4A574
+    style Safety fill:#faf5ec,stroke:#D4A574
+    style L1 fill:#fff,stroke:#8EA876
+    style L2 fill:#fff,stroke:#8EA876
+    style L3 fill:#fff,stroke:#8EA876
 ```
-Patient phone (PWA) ──► FastAPI backend ──► GLM-4.5 → Claude fallback
-                             │
-                             ├── Memory retrieval (patient_profile.json)
-                             ├── Google Calendar ICS (no OAuth, 60s cache)
-                             ├── verify_grounded (rule-based)
-                             ├── verify_with_critic (LLM, temp 0)
-                             ├── patterns agent (deterministic)
-                             └── ElevenLabs TTS (MD5-cached)
-                             │
-Carer phone (PWA) ◄───── data/*.json (polled every 2 s)
-```
+
+*Dashed arrows are asynchronous or conditional. The two agents run independently — the conversation agent answers Margaret; the pattern-watching agent observes the conversation and nudges Priya when Margaret drifts. They never talk to each other.*
 
 **Stack:** FastAPI + Uvicorn · Python 3.12 · vanilla HTML/CSS/JS · no build step · deploy on Render free tier.
 
