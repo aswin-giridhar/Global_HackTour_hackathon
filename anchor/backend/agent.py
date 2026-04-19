@@ -324,10 +324,10 @@ def respond_to_margaret(user_input: str) -> dict:
         profile = json.load(f)
 
     # 1b. If a Google Calendar ICS URL is configured, replace the static
-    #     scheduled_events with the live feed. This is the Track-3 "real
-    #     agentic integration" — when Priya adds a new event to her real
-    #     calendar, Anchor's answer to "when is Priya coming?" reflects
-    #     it within 60s. Falls back silently to static on any failure.
+    #     scheduled_events with the live feed — when Priya adds a new
+    #     event to her real calendar, Anchor's answer to "when is Priya
+    #     coming?" reflects it within 60s. Falls back silently to the
+    #     static schedule on any failure.
     try:
         from calendar_integration import get_live_events
         live = get_live_events()

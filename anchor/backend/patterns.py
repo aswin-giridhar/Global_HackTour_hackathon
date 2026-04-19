@@ -1,4 +1,5 @@
-"""Pattern-detection agent — the Track-3 "agentic multi-step" moment.
+"""Pattern-detection agent — a second deterministic agent running
+alongside the conversation LLM.
 
 On every turn Anchor watches which family members Margaret mentioned, and
 independently checks the live schedule. When the two diverge — she's asking
@@ -8,7 +9,9 @@ we surface a soft signal to the carer:
     "Margaret's asked about Priya 4 times since this morning, but her next
      visit isn't until Thursday. A short call might help."
 
-This is genuinely agentic: the system chains
+This is the inclusion point: Margaret gets a call at the moment she most
+wanted one, without being asked to recognise that she needed it. The
+system chains
     observe (NER over turn)
   → store (rolling query log)
   → retrieve (live ICS / scheduled_events)

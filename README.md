@@ -127,6 +127,24 @@ flowchart LR
 
 *Dashed arrows are asynchronous or conditional. The two agents run independently — the conversation agent answers Margaret; the pattern-watching agent observes the conversation and nudges Priya when Margaret drifts. They never talk to each other.*
 
+<details>
+<summary>Text-mode fallback (for terminal / non-Mermaid readers)</summary>
+
+```
+Patient phone (PWA) ──► FastAPI backend ──► GLM-4.5 → Claude fallback
+                             │
+                             ├── Memory retrieval (patient_profile.json)
+                             ├── Google Calendar ICS (no OAuth, 60s cache)
+                             ├── verify_grounded (rule-based)
+                             ├── verify_with_critic (LLM, temp 0)
+                             ├── patterns agent (deterministic)
+                             └── ElevenLabs TTS (MD5-cached)
+                             │
+Carer phone (PWA) ◄───── data/*.json (polled every 2 s)
+```
+
+</details>
+
 **Stack:** FastAPI + Uvicorn · Python 3.12 · vanilla HTML/CSS/JS · no build step · deploy on Render free tier.
 
 ---

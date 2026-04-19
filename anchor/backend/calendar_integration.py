@@ -3,8 +3,10 @@
 Priya pastes the "Secret address in iCal format" URL from her Google
 Calendar settings. Anchor fetches it on demand (cache 60 s) and feeds the
 upcoming events into the agent's memory block instead of the static
-scheduled_events from patient_profile.json. This is the Track-3
-"real agentic integration" story without any OAuth overhead.
+scheduled_events from patient_profile.json. This gives Anchor a real
+carer-side integration without any OAuth overhead — supporting the
+inclusion story by letting Margaret hear answers from Priya's actual
+calendar instead of a static copy that drifts.
 
 We never put the ICS URL in logs or GET responses — it's treated as a
 per-calendar shared secret.
